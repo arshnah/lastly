@@ -5,7 +5,6 @@ Lastly is a Next.js project that generates dynamic SVG images showcasing your La
 
 It supports multiple endpoints to visualize artists, tracks, albums, and recent activity for any Last.fm user - all rendered server-side as SVGs.
 
----
 
 ## API Endpoints
 
@@ -19,7 +18,6 @@ The project provides the following API endpoints:
 | `/api/top-albums`     | Fetches and visualizes top albums          |
 | `/api/recent`         | Fetches and visualizes recent tracks       |
 
----
 
 ## Embedding in README
 
@@ -39,7 +37,6 @@ Replace `USERNAME` with your Last.fm username and `PERIOD` with the desired peri
 <img src="https://lastly.nisarga.me/api/overall?username=USERNAME&period=overall" alt="Overall Statistics" align="center">
 ```
 
----
 
 ### Options
 
@@ -54,9 +51,8 @@ Replace `USERNAME` with your Last.fm username and `PERIOD` with the desired peri
 
 If `period` is not specified, the default is `overall`.
 
----
 
-## 📖 Self-Hosting Guide
+## Self-Hosting Guide
 
 Follow the steps below to set up and run the project on your local machine:
 
@@ -93,15 +89,12 @@ Follow the steps below to set up and run the project on your local machine:
 
    Open [http://localhost:3000](http://localhost:3000) with your browser to view the project.
 
----
 
 ## Deploy with Vercel
 
 Deploy the project to Vercel using the button below. Make sure to set up your environment variable (`LASTFM_API_KEY`) during the process.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fni5arga%2FLastly&env=LASTFM_API_KEY)
-
----
 
 
 ## License
