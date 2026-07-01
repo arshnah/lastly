@@ -20,9 +20,9 @@ function albumArt(images?: RecentTrack['image']): string | undefined {
   return url;
 }
 
-function line(artist: string, extra?: string): string {
-  const a = truncate(artist || 'Unknown Artist', 30);
-  return extra ? `${a}  •  ${truncate(extra, 32)}` : a;
+function line(artist: string, extra: string | undefined, max: number): string {
+  const full = extra ? `${artist || 'Unknown Artist'} • ${extra}` : artist || 'Unknown Artist';
+  return truncate(full, max);
 }
 
 function equalizer(color: string): string {
@@ -73,7 +73,7 @@ function render(t: Theme, d: Data): string {
     ? `<line x1="28" y1="128" x2="316" y2="128" stroke="${t.subtitle}" stroke-opacity="0.18"/>
        <text x="28" y="150" font-family="${FONT}" font-size="10" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">PREVIOUS</text>
        <text x="28" y="172" font-family="${FONT}" font-size="15" font-weight="bold" fill="${t.section}" opacity="0.9">${escapeXML(truncate(d.previous.name, 24))}</text>
-       <text x="28" y="190" font-family="${FONT}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text']))}</text>`
+       <text x="28" y="190" font-family="${FONT}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text'], 42))}</text>`
     : '';
 
   const stats = `${formatNumber(d.artistPlays)} artist plays   ·   ${formatNumber(d.trackPlays)} track plays   ·   ${d.total} scrobbles`;
@@ -84,7 +84,7 @@ function render(t: Theme, d: Data): string {
   ${artwork}
   ${header}
   <text x="28" y="78" font-family="${FONT}" font-size="23" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, 22))}</text>
-  <text x="28" y="103" font-family="${FONT}" font-size="14" fill="${t.item}">${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text']))}</text>
+  <text x="28" y="103" font-family="${FONT}" font-size="14" fill="${t.item}">${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text'], 34))}</text>
   ${previous}
   <text x="28" y="209" font-family="${FONT}" font-size="10.5" fill="${t.subtitle}">${escapeXML(stats)}</text>
 </svg>`;
