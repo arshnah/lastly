@@ -73,6 +73,9 @@ export interface TopAlbum {
 export interface RecentTrack {
   name: string;
   artist: { '#text': string };
+  album?: { '#text': string };
+  image?: LfmImage[];
+  date?: { uts: string; '#text': string };
   '@attr'?: { nowplaying?: string };
 }
 
