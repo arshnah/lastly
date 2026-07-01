@@ -28,7 +28,7 @@ function line(artist: string, extra?: string): string {
 function equalizer(color: string): string {
   return [154, 161, 168, 175]
     .map(
-      (x, i) => `<rect x="${x}" width="4" rx="1.5" fill="${color}">
+      (x, i) => `<rect x="${x}" y="29" width="4" height="10" rx="1.5" fill="${color}">
       <animate attributeName="height" values="5;15;5" dur="${0.6 + i * 0.15}s" repeatCount="indefinite"/>
       <animate attributeName="y" values="34;24;34" dur="${0.6 + i * 0.15}s" repeatCount="indefinite"/>
     </rect>`,
@@ -50,36 +50,43 @@ function render(t: Theme, d: Data): string {
   const live = Boolean(d.current['@attr']?.nowplaying);
   const accent = '#e5342b';
 
+  const ax = 344;
+  const ay = 43;
+  const asz = 134;
+  const frame = `<rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="14" fill="none" stroke="${t.section}" stroke-opacity="0.35" stroke-width="1.5"/>`;
   const artwork = d.art
-    ? `<clipPath id="art"><rect x="352" y="40" width="128" height="128" rx="12"/></clipPath>
-       <image href="${d.art}" x="352" y="40" width="128" height="128" clip-path="url(#art)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<rect x="352" y="40" width="128" height="128" rx="12" fill="${t.section}" opacity="0.12"/>
-       <text x="416" y="118" font-size="48" text-anchor="middle" fill="${t.subtitle}">♪</text>`;
+    ? `<rect x="${ax - 3}" y="${ay - 3}" width="${asz + 6}" height="${asz + 6}" rx="16" fill="${t.section}" opacity="0.08"/>
+       <clipPath id="art"><rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="14"/></clipPath>
+       <image href="${d.art}" x="${ax}" y="${ay}" width="${asz}" height="${asz}" clip-path="url(#art)" preserveAspectRatio="xMidYMid slice"/>
+       ${frame}`
+    : `<rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="14" fill="${t.section}" opacity="0.1"/>
+       <text x="${ax + asz / 2}" y="${ay + asz / 2 + 18}" font-size="50" text-anchor="middle" fill="${t.subtitle}">♪</text>
+       ${frame}`;
 
   const header = live
-    ? `<circle cx="34" cy="32" r="4" fill="${accent}"><animate attributeName="opacity" values="1;0.2;1" dur="1.3s" repeatCount="indefinite"/></circle>
-       <text x="46" y="36" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="1.5" fill="${accent}">NOW PLAYING</text>
+    ? `<circle cx="34" cy="34" r="4" fill="${accent}"><animate attributeName="opacity" values="1;0.2;1" dur="1.3s" repeatCount="indefinite"/></circle>
+       <text x="46" y="38" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="2" fill="${accent}">NOW PLAYING</text>
        ${equalizer(accent)}`
-    : `<text x="28" y="36" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="1.5" fill="${t.subtitle}">LAST SCROBBLE</text>`;
+    : `<text x="28" y="38" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">LAST SCROBBLE</text>`;
 
   const previous = d.previous
-    ? `<line x1="28" y1="122" x2="340" y2="122" stroke="${t.subtitle}" stroke-opacity="0.2"/>
-       <text x="28" y="144" font-family="${FONT}" font-size="10" font-weight="bold" letter-spacing="1.5" fill="${t.subtitle}">PREVIOUS</text>
-       <text x="28" y="166" font-family="${FONT}" font-size="15" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.previous.name, 26))}</text>
-       <text x="28" y="185" font-family="${FONT}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text']))}</text>`
+    ? `<line x1="28" y1="128" x2="316" y2="128" stroke="${t.subtitle}" stroke-opacity="0.18"/>
+       <text x="28" y="150" font-family="${FONT}" font-size="10" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">PREVIOUS</text>
+       <text x="28" y="172" font-family="${FONT}" font-size="15" font-weight="bold" fill="${t.section}" opacity="0.9">${escapeXML(truncate(d.previous.name, 24))}</text>
+       <text x="28" y="190" font-family="${FONT}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text']))}</text>`
     : '';
 
-  const stats = `${formatNumber(d.artistPlays)} artist plays  ·  ${formatNumber(d.trackPlays)} track plays  ·  ${d.total} scrobbles`;
+  const stats = `${formatNumber(d.artistPlays)} artist plays   ·   ${formatNumber(d.trackPlays)} track plays   ·   ${d.total} scrobbles`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="220" viewBox="0 0 500 220" fill="none" role="img">
   ${defs}
-  <rect x="0.5" y="0.5" width="499" height="219" rx="16" fill="${fill}" stroke="${t.section}" stroke-opacity="0.25"/>
+  <rect x="0.5" y="0.5" width="499" height="219" rx="16" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>
   ${artwork}
   ${header}
-  <text x="28" y="76" font-family="${FONT}" font-size="22" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, 24))}</text>
-  <text x="28" y="100" font-family="${FONT}" font-size="14" fill="${t.item}">${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text']))}</text>
+  <text x="28" y="78" font-family="${FONT}" font-size="23" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, 22))}</text>
+  <text x="28" y="103" font-family="${FONT}" font-size="14" fill="${t.item}">${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text']))}</text>
   ${previous}
-  <text x="28" y="208" font-family="${FONT}" font-size="11" fill="${t.subtitle}">${escapeXML(stats)}</text>
+  <text x="28" y="209" font-family="${FONT}" font-size="10.5" fill="${t.subtitle}">${escapeXML(stats)}</text>
 </svg>`;
 }
 
