@@ -104,6 +104,24 @@ export async function getRecentTracks(user: string, limit = 5): Promise<RecentTr
   return tracks.slice(0, limit);
 }
 
+export async function getArtistPlays(user: string, artist: string): Promise<number> {
+  try {
+    const d = await request('artist.getinfo', { username: user, artist });
+    return Number(d.artist?.stats?.userplaycount) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function getTrackPlays(user: string, artist: string, track: string): Promise<number> {
+  try {
+    const d = await request('track.getinfo', { username: user, artist, track });
+    return Number(d.track?.userplaycount) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function pickImage(images?: LfmImage[]): string | undefined {
   if (!Array.isArray(images)) return undefined;
   return images[2]?.['#text'] || [...images].reverse().find((i) => i['#text'])?.['#text'];
