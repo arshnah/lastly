@@ -46,7 +46,7 @@ export function formatNumber(n: string | number): string {
   return Number.isFinite(num) ? num.toLocaleString('en-US') : `${n}`;
 }
 
-const FONT = `'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif`;
+export const FONT = `'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif`;
 
 function styleBlock(t: Theme): string {
   return `<style>
@@ -59,7 +59,7 @@ function styleBlock(t: Theme): string {
   </style>`;
 }
 
-function resolveBackground(t: Theme): { defs: string; fill: string } {
+export function resolveBackground(t: Theme): { defs: string; fill: string } {
   if (!Array.isArray(t.bg)) return { defs: '', fill: t.bg };
   return {
     defs: `<defs>
