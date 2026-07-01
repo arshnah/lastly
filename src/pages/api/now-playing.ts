@@ -73,7 +73,7 @@ function render(t: Theme, d: Data): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="220" viewBox="0 0 500 220" fill="none" role="img">
   ${defs}
-  <rect width="500" height="220" rx="16" fill="${fill}"/>
+  <rect x="0.5" y="0.5" width="499" height="219" rx="16" fill="${fill}" stroke="${t.section}" stroke-opacity="0.25"/>
   ${artwork}
   ${header}
   <text x="28" y="76" font-family="${FONT}" font-size="22" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, 24))}</text>

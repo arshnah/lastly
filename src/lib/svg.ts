@@ -85,7 +85,7 @@ export function card(width: number, height: number, t: Theme, body: string): str
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" role="img">
   ${defs}
   ${styleBlock(t)}
-  <rect width="${width}" height="${height}" rx="10" fill="${fill}"/>
+  <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="10" fill="${fill}" stroke="${t.section}" stroke-opacity="0.2"/>
   ${body}
 </svg>`;
 }
