@@ -1,6 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getTheme, escapeXML, truncate, FONT, resolveBackground, sendError, sendSvg, Theme } from '@/lib/svg';
-import { parseUsername, getRecentTracks, fetchAvatar, LastfmError, RecentTrack } from '@/lib/lastfm';
+import { getTheme, escapeXML, truncate, formatNumber, FONT, resolveBackground, sendError, sendSvg, Theme } from '@/lib/svg';
+import {
+  parseUsername,
+  getUserInfo,
+  getRecentTracks,
+  getArtistPlays,
+  getTrackPlays,
+  fetchAvatar,
+  LastfmError,
+  RecentTrack,
+} from '@/lib/lastfm';
 
 const LASTFM_PLACEHOLDER = '2a96cbd8b46e442fc41c2b86b821562f';
 
@@ -11,53 +20,66 @@ function albumArt(images?: RecentTrack['image']): string | undefined {
   return url;
 }
 
+function line(artist: string, extra?: string): string {
+  const a = truncate(artist || 'Unknown Artist', 30);
+  return extra ? `${a}  •  ${truncate(extra, 32)}` : a;
+}
+
 function equalizer(color: string): string {
-  const bars = [
-    { x: 430, dur: '0.7s' },
-    { x: 438, dur: '0.9s' },
-    { x: 446, dur: '0.6s' },
-    { x: 454, dur: '0.8s' },
-  ];
-  return bars
+  return [154, 161, 168, 175]
     .map(
-      (b) => `<rect x="${b.x}" width="5" rx="1.5" fill="${color}">
-      <animate attributeName="height" values="8;26;8" dur="${b.dur}" repeatCount="indefinite"/>
-      <animate attributeName="y" values="88;70;88" dur="${b.dur}" repeatCount="indefinite"/>
+      (x, i) => `<rect x="${x}" width="4" rx="1.5" fill="${color}">
+      <animate attributeName="height" values="5;15;5" dur="${0.6 + i * 0.15}s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="34;24;34" dur="${0.6 + i * 0.15}s" repeatCount="indefinite"/>
     </rect>`,
     )
     .join('');
 }
 
-function render(t: Theme, art: string | null, track: RecentTrack): string {
+interface Data {
+  current: RecentTrack;
+  previous?: RecentTrack;
+  art: string | null;
+  artistPlays: number;
+  trackPlays: number;
+  total: string;
+}
+
+function render(t: Theme, d: Data): string {
   const { defs, fill } = resolveBackground(t);
-  const live = Boolean(track['@attr']?.nowplaying);
+  const live = Boolean(d.current['@attr']?.nowplaying);
   const accent = '#e5342b';
 
-  const artwork = art
-    ? `<clipPath id="art"><rect x="20" y="20" width="100" height="100" rx="10"/></clipPath>
-       <image href="${art}" x="20" y="20" width="100" height="100" clip-path="url(#art)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<rect x="20" y="20" width="100" height="100" rx="10" fill="${t.section}" opacity="0.15"/>
-       <text x="70" y="86" font-size="42" text-anchor="middle" fill="${t.subtitle}">♪</text>`;
+  const artwork = d.art
+    ? `<clipPath id="art"><rect x="352" y="40" width="128" height="128" rx="12"/></clipPath>
+       <image href="${d.art}" x="352" y="40" width="128" height="128" clip-path="url(#art)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<rect x="352" y="40" width="128" height="128" rx="12" fill="${t.section}" opacity="0.12"/>
+       <text x="416" y="118" font-size="48" text-anchor="middle" fill="${t.subtitle}">♪</text>`;
 
-  const status = live
-    ? `<circle cx="150" cy="38" r="4" fill="${accent}">
-         <animate attributeName="opacity" values="1;0.2;1" dur="1.3s" repeatCount="indefinite"/>
-       </circle>
-       <text x="162" y="42" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="1.5" fill="${accent}">NOW PLAYING</text>
+  const header = live
+    ? `<circle cx="34" cy="32" r="4" fill="${accent}"><animate attributeName="opacity" values="1;0.2;1" dur="1.3s" repeatCount="indefinite"/></circle>
+       <text x="46" y="36" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="1.5" fill="${accent}">NOW PLAYING</text>
        ${equalizer(accent)}`
-    : `<text x="140" y="42" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="1.5" fill="${t.subtitle}">LAST PLAYED</text>`;
+    : `<text x="28" y="36" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="1.5" fill="${t.subtitle}">LAST SCROBBLE</text>`;
 
-  const album = track.album?.['#text'] || '';
+  const previous = d.previous
+    ? `<line x1="28" y1="122" x2="340" y2="122" stroke="${t.subtitle}" stroke-opacity="0.2"/>
+       <text x="28" y="144" font-family="${FONT}" font-size="10" font-weight="bold" letter-spacing="1.5" fill="${t.subtitle}">PREVIOUS</text>
+       <text x="28" y="166" font-family="${FONT}" font-size="15" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.previous.name, 26))}</text>
+       <text x="28" y="185" font-family="${FONT}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text']))}</text>`
+    : '';
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="140" viewBox="0 0 480 140" fill="none" role="img">
+  const stats = `${formatNumber(d.artistPlays)} artist plays  ·  ${formatNumber(d.trackPlays)} track plays  ·  ${d.total} scrobbles`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="220" viewBox="0 0 500 220" fill="none" role="img">
   ${defs}
-  <rect width="480" height="140" rx="14" fill="${fill}"/>
+  <rect width="500" height="220" rx="16" fill="${fill}"/>
   ${artwork}
-  ${status}
-  <text x="140" y="72" font-family="${FONT}" font-size="19" font-weight="bold" fill="${t.title}">${escapeXML(truncate(track.name, 28))}</text>
-  <text x="140" y="96" font-family="${FONT}" font-size="14" fill="${t.item}">${escapeXML(truncate(track.artist?.['#text'] || 'Unknown Artist', 34))}</text>
-  ${album ? `<text x="140" y="118" font-family="${FONT}" font-size="12" font-style="italic" fill="${t.subtitle}">${escapeXML(truncate(album, 40))}</text>` : ''}
-  <text x="460" y="130" font-family="${FONT}" font-size="10" text-anchor="end" fill="${t.subtitle}" opacity="0.6">last.fm</text>
+  ${header}
+  <text x="28" y="76" font-family="${FONT}" font-size="22" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, 24))}</text>
+  <text x="28" y="100" font-family="${FONT}" font-size="14" fill="${t.item}">${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text']))}</text>
+  ${previous}
+  <text x="28" y="208" font-family="${FONT}" font-size="11" fill="${t.subtitle}">${escapeXML(stats)}</text>
 </svg>`;
 }
 
@@ -67,11 +89,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const user = parseUsername(req.query.username);
     if (!user) return sendError(res, 'username query param is required', theme);
 
-    const [track] = await getRecentTracks(user, 1);
-    if (!track) return sendError(res, 'No recent tracks found', theme);
+    const [recent, info] = await Promise.all([getRecentTracks(user, 2), getUserInfo(user)]);
+    const current = recent[0];
+    if (!current) return sendError(res, 'No recent tracks found', theme);
 
-    const art = await fetchAvatar(albumArt(track.image));
-    sendSvg(res, render(theme, art, track), 30);
+    const artist = current.artist?.['#text'] || '';
+    const [artistPlays, trackPlays, art] = await Promise.all([
+      getArtistPlays(user, artist),
+      getTrackPlays(user, artist, current.name),
+      fetchAvatar(albumArt(current.image)),
+    ]);
+
+    sendSvg(
+      res,
+      render(theme, { current, previous: recent[1], art, artistPlays, trackPlays, total: formatNumber(info.playcount) }),
+      30,
+    );
   } catch (err) {
     sendError(res, err instanceof LastfmError ? err.message : 'Error fetching data from Last.fm', theme);
   }
