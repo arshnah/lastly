@@ -1,67 +1,75 @@
 # Lastly
 
-Lastly is a Next.js project that generates dynamic SVG images showcasing your Last.fm listening statistics. These SVGs are designed to be embedded directly into GitHub READMEs, profiles, or any markdown-supported platform.
+Lastly generates dynamic SVG cards of your Last.fm listening stats, built to embed straight into a GitHub README or any markdown page. Everything renders server-side as an SVG, with CDN caching and a set of color themes.
 
-It supports multiple endpoints to visualize artists, tracks, albums, and recent activity for any Last.fm user — all rendered server-side as SVGs, with CDN caching and multiple color themes.
+It covers a live now-playing card, overall stats, top artists, tracks and albums, and recent activity. Any Last.fm user works.
 
-## API Endpoints
+> Forked from [ni5arga/Lastly](https://github.com/ni5arga/lastly) (MIT). This fork adds the now-playing card, multi-account merging, and the `arsh` / `arsh-light` themes. Deployed at `lastly-pi.vercel.app`.
 
-| Endpoint           | Description                               |
-| ------------------ | ----------------------------------------- |
-| `/api/overall`     | Fetches and visualizes overall statistics |
-| `/api/top-artists` | Fetches and visualizes top artists        |
-| `/api/top-tracks`  | Fetches and visualizes top tracks         |
-| `/api/top-albums`  | Fetches and visualizes top albums         |
-| `/api/recent`      | Fetches and visualizes recent tracks      |
+## API endpoints
 
-## Embedding in README
+| Endpoint           | Description                                              |
+| ------------------ | ------------------------------------------------------- |
+| `/api/now-playing` | Live now-playing or last scrobble, with play counts     |
+| `/api/overall`     | Overall listening statistics                            |
+| `/api/top-artists` | Top artists                                             |
+| `/api/top-tracks`  | Top tracks                                               |
+| `/api/top-albums`  | Top albums                                               |
+| `/api/recent`      | Recently played                                         |
 
-Use markdown:
+## Embedding
+
+Markdown:
 
 ```
-![Overall Statistics](https://lastly.nisarga.me/api/overall?username=USERNAME&period=overall&theme=default)
+![Now Playing](https://lastly-pi.vercel.app/api/now-playing?username=USERNAME&theme=arsh)
 ```
 
 Or HTML for more control (e.g. centering):
 
 ```
-<img src="https://lastly.nisarga.me/api/overall?username=USERNAME&theme=dracula" alt="Overall Statistics" align="center">
+<img src="https://lastly-pi.vercel.app/api/overall?username=USERNAME&theme=dracula" alt="Overall Statistics" align="center">
 ```
 
 Replace `USERNAME` with your Last.fm username.
 
-### Query Options
+### Query options
 
-- **`username`** *(required)*: Your [Last.fm](https://www.last.fm) username.
-- **`period`**: Time range for stats. Applies to `overall`, `top-artists`, `top-tracks`, `top-albums`.
+- **`username`** *(required)*: your [Last.fm](https://www.last.fm) username. On `now-playing` you can pass more than one, comma-separated, to merge accounts (see below).
+- **`period`**: time range for stats. Applies to `overall`, `top-artists`, `top-tracks`, `top-albums`.
   - `overall` (default), `7day`, `1month`, `3month`, `6month`, `12month`
-- **`theme`**: Color theme. Defaults to `default`.
-  - `default`, `dark`, `light`, `dracula`, `gruvbox`, `tokyonight`, `radical`, `nord`, `catppuccin`
+- **`theme`**: color theme. Defaults to `default`.
+  - `default`, `dark`, `light`, `arsh`, `arsh-light`, `dracula`, `gruvbox`, `tokyonight`, `radical`, `nord`, `catppuccin`
 
-If `period` or `theme` is omitted, sensible defaults are used. Invalid values fall back to defaults.
+Invalid values fall back to defaults.
 
-### Examples
+### Now playing, with account merging
+
+`/api/now-playing` shows what you are playing right now, or your last scrobble if nothing is live, plus artist and track play counts and your total scrobbles.
+
+Pass several usernames, comma-separated, to merge accounts into one card. It shows whichever account is currently playing, or the most recent scrobble across all of them, and sums the play counts and totals:
 
 ```
-![Top Artists](https://lastly.nisarga.me/api/top-artists?username=USERNAME&period=7day&theme=tokyonight)
-![Recent](https://lastly.nisarga.me/api/recent?username=USERNAME&theme=nord)
+![Now Playing](https://lastly-pi.vercel.app/api/now-playing?username=account_one,account_two&theme=arsh)
 ```
+
+Set `LASTFM_EXCLUDE_ARTISTS` (comma-separated, substring match) to skip artists when picking the current track. Useful for hiding something that auto-plays.
 
 ## Caching
 
 Responses are served with `Cache-Control` headers so the CDN can serve cards without re-hitting Last.fm on every render:
 
-- `overall`, `top-*` → cached ~6 hours
-- `recent` → cached ~5 minutes (activity changes often)
+- `overall`, `top-*` are cached ~6 hours
+- `recent` and `now-playing` are cached ~30 seconds, since they change often
 
 Errors (e.g. unknown user) return a readable SVG error card with a short cache, so your README never shows a broken image.
 
-## Self-Hosting Guide
+## Self-hosting
 
 1. **Clone the repository**:
 
 ```
-git clone https://github.com/ni5arga/lastly.git
+git clone https://github.com/arshnah/lastly.git
 cd lastly
 ```
 
@@ -71,10 +79,11 @@ cd lastly
 npm install
 ```
 
-3. **Configure environment**: Create a `.env.local` in the root and add your Last.fm API key:
+3. **Configure environment**: create a `.env.local` in the root:
 
 ```
 LASTFM_API_KEY=your_lastfm_api_key
+LASTFM_EXCLUDE_ARTISTS=Some Artist   # optional, comma-separated
 ```
 
 4. **Run the development server**:
@@ -89,18 +98,18 @@ Open <http://localhost:3000> with your browser to view the project.
 
 Deploy to Vercel and set the `LASTFM_API_KEY` environment variable during setup.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fni5arga%2FLastly&env=LASTFM_API_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farshnah%2Flastly&env=LASTFM_API_KEY)
 
-## Project Structure
+## Project structure
 
 ```
 src/
 ├── lib/
-│   ├── lastfm.ts   # Last.fm API client: typed fetchers, validation, timeouts, avatar handling
-│   └── svg.ts      # Themes, SVG building blocks, error cards, cached response senders
+│   ├── lastfm.ts   # Last.fm API client: typed fetchers, parseUsernames, timeouts, avatar handling
+│   └── svg.ts      # Themes (incl. arsh / arsh-light), SVG building blocks, error cards, cached senders
 └── pages/
-    ├── index.tsx   # Redirects to the GitHub repo
     └── api/
+        ├── now-playing.ts   # live card, merges multiple accounts
         ├── overall.ts
         ├── recent.ts
         ├── top-albums.ts
@@ -110,4 +119,4 @@ src/
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT, see the [LICENSE](LICENSE) file. Forked from [ni5arga/Lastly](https://github.com/ni5arga/lastly).
