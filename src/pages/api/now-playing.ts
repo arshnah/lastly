@@ -33,6 +33,21 @@ function albumArt(images?: RecentTrack['image']): string | undefined {
   return url;
 }
 
+// Last.fm frequently has no cover for non-Western tracks (bollywood especially),
+// so fall back to iTunes artwork when its own image is missing or won't load.
+async function itunesArt(artist: string, album?: string, track?: string): Promise<string | undefined> {
+  const term = `${artist} ${album || track || ''}`.trim();
+  if (!term) return undefined;
+  try {
+    const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`, { signal: AbortSignal.timeout(6000) });
+    const d = await r.json();
+    const art: string | undefined = d?.results?.[0]?.artworkUrl100;
+    return art ? art.replace('100x100bb', '600x600bb') : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function line(artist: string, extra: string | undefined, max: number): string {
   const full = extra ? `${artist || 'Unknown Artist'} • ${extra}` : artist || 'Unknown Artist';
   return truncate(full, max);
@@ -132,11 +147,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const previous = merged.find((t) => trackKey(t) !== trackKey(current));
 
     const artist = current.artist?.['#text'] || '';
-    const [artistPlaysArr, trackPlaysArr, art] = await Promise.all([
+    const [artistPlaysArr, trackPlaysArr] = await Promise.all([
       Promise.all(users.map((u) => getArtistPlays(u, artist))),
       Promise.all(users.map((u) => getTrackPlays(u, artist, current.name))),
-      fetchAvatar(albumArt(current.image)),
     ]);
+
+    // prefer Last.fm's own cover, fall back to iTunes if it's missing or dead
+    let art = await fetchAvatar(albumArt(current.image));
+    if (!art) {
+      const alt = await itunesArt(artist, current.album?.['#text'], current.name);
+      if (alt) art = await fetchAvatar(alt);
+    }
 
     const artistPlays = artistPlaysArr.reduce((a, b) => a + b, 0);
     const trackPlays = trackPlaysArr.reduce((a, b) => a + b, 0);
