@@ -18,6 +18,22 @@ export function parseUsername(u: unknown): string | null {
   return typeof name === 'string' && name.trim() ? name.trim() : null;
 }
 
+// Accepts a comma-separated value or repeated params, e.g. ?username=a,b or
+// ?username=a&username=b. De-duped, order preserved. Used to merge accounts.
+export function parseUsernames(u: unknown): string[] {
+  const raw = Array.isArray(u) ? u.join(',') : typeof u === 'string' ? u : '';
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of raw.split(',')) {
+    const name = part.trim();
+    if (name && !seen.has(name.toLowerCase())) {
+      seen.add(name.toLowerCase());
+      out.push(name);
+    }
+  }
+  return out;
+}
+
 function apiKey() {
   const k = process.env.LASTFM_API_KEY;
   if (!k) throw new LastfmError('Server is missing LASTFM_API_KEY');

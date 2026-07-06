@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getTheme, escapeXML, truncate, formatNumber, FONT, resolveBackground, sendError, sendSvg, Theme } from '@/lib/svg';
 import {
-  parseUsername,
+  parseUsernames,
   getUserInfo,
   getRecentTracks,
   getArtistPlays,
@@ -12,6 +12,19 @@ import {
 } from '@/lib/lastfm';
 
 const LASTFM_PLACEHOLDER = '2a96cbd8b46e442fc41c2b86b821562f';
+
+// Artists to skip when picking the current/previous track (e.g. the kirtan that
+// auto-runs). Comma-separated substring match via LASTFM_EXCLUDE_ARTISTS.
+function isExcluded(artist?: string): boolean {
+  const a = (artist || '').toLowerCase();
+  return (process.env.LASTFM_EXCLUDE_ARTISTS || 'Bhai Satvinder Singh Ji')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+    .some((x) => a.includes(x));
+}
+
+const trackKey = (t: RecentTrack) => `${t.name}|${t.artist?.['#text'] || ''}`.toLowerCase();
 
 function albumArt(images?: RecentTrack['image']): string | undefined {
   if (!Array.isArray(images)) return undefined;
@@ -48,7 +61,7 @@ interface Data {
 function render(t: Theme, d: Data): string {
   const { defs, fill } = resolveBackground(t);
   const live = Boolean(d.current['@attr']?.nowplaying);
-  const accent = '#e5342b';
+  const accent = t.accent || '#e5342b';
 
   const ax = 344;
   const ay = 43;
@@ -93,25 +106,43 @@ function render(t: Theme, d: Data): string {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const theme = getTheme(req.query.theme);
   try {
-    const user = parseUsername(req.query.username);
-    if (!user) return sendError(res, 'username query param is required', theme);
+    const users = parseUsernames(req.query.username);
+    if (!users.length) return sendError(res, 'username query param is required', theme);
 
-    const [recent, info] = await Promise.all([getRecentTracks(user, 2), getUserInfo(user)]);
-    const current = recent[0];
+    // Pull each account's recent tracks + info in parallel; one failing account
+    // doesn't sink the card.
+    const [recents, infos] = await Promise.all([
+      Promise.all(users.map((u) => getRecentTracks(u, 3).catch(() => [] as RecentTrack[]))),
+      Promise.all(users.map((u) => getUserInfo(u).catch(() => null))),
+    ]);
+
+    // Merge: drop excluded artists, then order nowplaying-first, newest-first.
+    const merged = recents
+      .flat()
+      .filter((t) => t && t.name && !isExcluded(t.artist?.['#text']))
+      .sort((a, b) => {
+        const an = a['@attr']?.nowplaying ? 1 : 0;
+        const bn = b['@attr']?.nowplaying ? 1 : 0;
+        if (an !== bn) return bn - an;
+        return (Number(b.date?.uts) || 0) - (Number(a.date?.uts) || 0);
+      });
+
+    const current = merged[0];
     if (!current) return sendError(res, 'No recent tracks found', theme);
+    const previous = merged.find((t) => trackKey(t) !== trackKey(current));
 
     const artist = current.artist?.['#text'] || '';
-    const [artistPlays, trackPlays, art] = await Promise.all([
-      getArtistPlays(user, artist),
-      getTrackPlays(user, artist, current.name),
+    const [artistPlaysArr, trackPlaysArr, art] = await Promise.all([
+      Promise.all(users.map((u) => getArtistPlays(u, artist))),
+      Promise.all(users.map((u) => getTrackPlays(u, artist, current.name))),
       fetchAvatar(albumArt(current.image)),
     ]);
 
-    sendSvg(
-      res,
-      render(theme, { current, previous: recent[1], art, artistPlays, trackPlays, total: formatNumber(info.playcount) }),
-      30,
-    );
+    const artistPlays = artistPlaysArr.reduce((a, b) => a + b, 0);
+    const trackPlays = trackPlaysArr.reduce((a, b) => a + b, 0);
+    const total = infos.reduce((sum, i) => sum + (Number(i?.playcount) || 0), 0);
+
+    sendSvg(res, render(theme, { current, previous, art, artistPlays, trackPlays, total: formatNumber(total) }), 30);
   } catch (err) {
     sendError(res, err instanceof LastfmError ? err.message : 'Error fetching data from Last.fm', theme);
   }
