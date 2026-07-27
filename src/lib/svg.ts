@@ -9,14 +9,18 @@ export interface Theme {
   subtitle: string;
   stats: string;
   accent?: string;
+  // optional per-theme face; only the arsh themes set it, everything else keeps FONT
+  font?: string;
 }
+
+const MONO = `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
 
 export const themes: Record<string, Theme> = {
   default: { bg: ['#1a2a3a', '#3d6073'], title: '#ffffff', section: '#ffd700', item: '#f5f5f5', index: '#ff6b6b', subtitle: '#e0e0e0', stats: '#f5f5f5' },
   dark: { bg: '#0d1117', title: '#ffffff', section: '#58a6ff', item: '#c9d1d9', index: '#f778ba', subtitle: '#8b949e', stats: '#c9d1d9' },
   light: { bg: '#ffffff', title: '#24292f', section: '#0969da', item: '#24292f', index: '#cf222e', subtitle: '#57606a', stats: '#1a7f37' },
-  arsh: { bg: '#14171c', title: '#e8ebf0', section: '#8fb6ff', item: '#c9cfda', index: '#8fb6ff', subtitle: '#8b93a1', stats: '#8b93a1', accent: '#8fb6ff' },
-  'arsh-light': { bg: '#ffffff', title: '#1f2328', section: '#4f7fd1', item: '#57606a', index: '#4f7fd1', subtitle: '#8c959f', stats: '#57606a', accent: '#4f7fd1' },
+  arsh: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#d29922', subtitle: '#6e7681', stats: '#8b949e', accent: '#d29922', font: MONO },
+  'arsh-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#9a6700', subtitle: '#8c959f', stats: '#57606a', accent: '#9a6700', font: MONO },
   dracula: { bg: '#282a36', title: '#f8f8f2', section: '#bd93f9', item: '#f8f8f2', index: '#ff79c6', subtitle: '#6272a4', stats: '#50fa7b' },
   gruvbox: { bg: '#282828', title: '#fbf1c7', section: '#fabd2f', item: '#ebdbb2', index: '#fe8019', subtitle: '#a89984', stats: '#b8bb26' },
   tokyonight: { bg: '#1a1b27', title: '#70a5fd', section: '#bf91f3', item: '#a9b1d6', index: '#38bdae', subtitle: '#565f89', stats: '#9ece6a' },

@@ -77,6 +77,11 @@ function render(t: Theme, d: Data): string {
   const { defs, fill } = resolveBackground(t);
   const live = Boolean(d.current['@attr']?.nowplaying);
   const accent = t.accent || '#e5342b';
+  const F = t.font || FONT;
+  // mono runs wider than the sans default, so the text has less room before it
+  // reaches the artwork at x=344
+  const wide = Boolean(t.font);
+  const cap = { title: wide ? 17 : 22, line: wide ? 26 : 34, prev: wide ? 19 : 24, prevLine: wide ? 32 : 42 };
 
   const ax = 344;
   const ay = 43;
@@ -93,15 +98,15 @@ function render(t: Theme, d: Data): string {
 
   const header = live
     ? `<circle cx="34" cy="34" r="4" fill="${accent}"><animate attributeName="opacity" values="1;0.2;1" dur="1.3s" repeatCount="indefinite"/></circle>
-       <text x="46" y="38" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="2" fill="${accent}">NOW PLAYING</text>
+       <text x="46" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${accent}">NOW PLAYING</text>
        ${equalizer(accent)}`
-    : `<text x="28" y="38" font-family="${FONT}" font-size="12" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">LAST SCROBBLE</text>`;
+    : `<text x="28" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">LAST SCROBBLE</text>`;
 
   const previous = d.previous
     ? `<line x1="28" y1="128" x2="316" y2="128" stroke="${t.subtitle}" stroke-opacity="0.18"/>
-       <text x="28" y="150" font-family="${FONT}" font-size="10" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">PREVIOUS</text>
-       <text x="28" y="172" font-family="${FONT}" font-size="15" font-weight="bold" fill="${t.section}" opacity="0.9">${escapeXML(truncate(d.previous.name, 24))}</text>
-       <text x="28" y="190" font-family="${FONT}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text'], 42))}</text>`
+       <text x="28" y="150" font-family="${F}" font-size="10" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">PREVIOUS</text>
+       <text x="28" y="172" font-family="${F}" font-size="15" font-weight="bold" fill="${t.section}" opacity="0.9">${escapeXML(truncate(d.previous.name, cap.prev))}</text>
+       <text x="28" y="190" font-family="${F}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text'], cap.prevLine))}</text>`
     : '';
 
   const stats = `${formatNumber(d.artistPlays)} artist plays   ·   ${formatNumber(d.trackPlays)} track plays   ·   ${d.total} scrobbles`;
@@ -111,10 +116,10 @@ function render(t: Theme, d: Data): string {
   <rect x="0.5" y="0.5" width="499" height="219" rx="16" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>
   ${artwork}
   ${header}
-  <text x="28" y="78" font-family="${FONT}" font-size="23" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, 22))}</text>
-  <text x="28" y="103" font-family="${FONT}" font-size="14" fill="${t.item}">${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text'], 34))}</text>
+  <text x="28" y="78" font-family="${F}" font-size="23" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, cap.title))}</text>
+  <text x="28" y="103" font-family="${F}" font-size="14" fill="${t.item}">${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text'], cap.line))}</text>
   ${previous}
-  <text x="28" y="209" font-family="${FONT}" font-size="10.5" fill="${t.subtitle}">${escapeXML(stats)}</text>
+  <text x="28" y="209" font-family="${F}" font-size="10.5" fill="${t.subtitle}">${escapeXML(stats)}</text>
 </svg>`;
 }
 
