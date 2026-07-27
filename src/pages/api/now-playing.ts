@@ -73,6 +73,97 @@ interface Data {
   total: string;
 }
 
+// Wide layout. The 500 card is built around a big title and a hero cover; at
+// 940 that leaves a hole in the middle and a type scale twice everything it
+// sits next to. This lays the same data out as label/value rows on the shared
+// grid, so it reads as one more block in the stack rather than a music widget
+// that wandered in.
+function renderWide(t: Theme, d: Data): string {
+  const { defs, fill } = resolveBackground(t);
+  const live = Boolean(d.current['@attr']?.nowplaying);
+  const accent = t.accent || '#e5342b';
+  const F = t.font || FONT;
+
+  const W = t.width || 940;
+  const PAD = 30;
+  const FS = 14;
+  const CW = FS * 0.62;
+  const asz = 104;
+  const ax = W - PAD - asz;
+  const ay = 62;
+
+  const valX = PAD + 150;
+  const textRight = ax - 24;
+  const capFor = (x: number) => Math.max(8, Math.floor((textRight - x) / CW));
+
+  const artist = d.current.artist?.['#text'] || 'Unknown Artist';
+  const album = d.current.album?.['#text'] || '';
+  const prev = d.previous
+    ? `${d.previous.name} · ${d.previous.artist?.['#text'] || ''}`.replace(/ · $/, '')
+    : '';
+
+  const rows: Array<[string, string, string]> = [];
+  rows.push(['track', truncate(d.current.name, capFor(valX + 18)), 'hi']);
+  rows.push(['artist', truncate(artist, capFor(valX)), 'v']);
+  if (album) rows.push(['album', truncate(album, capFor(valX)), 'v']);
+  if (prev) rows.push(['previous', truncate(prev, capFor(valX)), 'm']);
+  rows.push([
+    'plays',
+    `${formatNumber(d.artistPlays)} of this artist · ${formatNumber(d.trackPlays)} of this track · ${d.total} total`,
+    'm',
+  ]);
+
+  const y0 = 84;
+  const body = rows
+    .map(([k, val, cls], i) => {
+      const y = y0 + i * 26;
+      // the live dot rides in front of the track value, where the eye lands
+      const dot =
+        k === 'track' && live
+          ? `<circle cx="${valX + 5}" cy="${y - 5}" r="4" fill="${accent}"><animate attributeName="opacity" values="1;0.25;1" dur="1.3s" repeatCount="indefinite"/></circle>`
+          : '';
+      const vx = k === 'track' && live ? valX + 18 : valX;
+      return (
+        `<text x="${PAD}" y="${y}" class="bul">.</text>` +
+        `<text x="${PAD + CW * 1.6}" y="${y}" class="k">${escapeXML(k)}:</text>` +
+        dot +
+        `<text x="${vx}" y="${y}" class="${cls}">${escapeXML(val)}</text>`
+      );
+    })
+    .join('\n');
+
+  const artwork = d.art
+    ? `<clipPath id="art"><rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="10"/></clipPath>
+       <image href="${d.art}" x="${ax}" y="${ay}" width="${asz}" height="${asz}" clip-path="url(#art)" preserveAspectRatio="xMidYMid slice"/>
+       <rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="10" fill="none" stroke="${t.subtitle}" stroke-opacity="0.35"/>`
+    : `<rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="10" fill="${t.section}" opacity="0.08"/>
+       <text x="${ax + asz / 2}" y="${ay + asz / 2 + 12}" font-size="34" text-anchor="middle" fill="${t.subtitle}">♪</text>`;
+
+  const H = Math.max(y0 + rows.length * 26 + 14, ay + asz + 22);
+  const head = live ? 'now playing' : 'last scrobble';
+  const headW = (14 + 7) * CW + 16;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img">
+  ${defs}
+  <style>
+    .hd{font:700 ${FS + 3}px ${F};fill:${t.section}}
+    .u{font:400 11px ${F};fill:${t.subtitle}}
+    .k{font:400 ${FS}px ${F};fill:${t.index}}
+    .bul{font:400 ${FS}px ${F};fill:${t.index}}
+    .hi{font:400 ${FS}px ${F};fill:${t.section}}
+    .v{font:400 ${FS}px ${F};fill:${t.item}}
+    .m{font:400 ${FS}px ${F};fill:${t.stats}}
+  </style>
+  <rect width="${W}" height="${H}" fill="${fill}"/>
+  <line x1="${PAD}" y1="0.5" x2="${W - PAD}" y2="0.5" stroke="${t.subtitle}" stroke-opacity="0.3"/>
+  <text x="${PAD}" y="46" class="hd">arshnah@lastfm</text>
+  <text x="${W - PAD}" y="46" text-anchor="end" class="u">${head}</text>
+  <line x1="${PAD + headW}" y1="41" x2="${W - PAD - head.length * 6.6 - 14}" y2="41" stroke="${t.subtitle}" stroke-opacity="0.3"/>
+  ${artwork}
+  ${body}
+</svg>`;
+}
+
 function render(t: Theme, d: Data): string {
   const { defs, fill } = resolveBackground(t);
   const live = Boolean(d.current['@attr']?.nowplaying);
@@ -183,7 +274,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const trackPlays = trackPlaysArr.reduce((a, b) => a + b, 0);
     const total = infos.reduce((sum, i) => sum + (Number(i?.playcount) || 0), 0);
 
-    sendSvg(res, render(theme, { current, previous, art, artistPlays, trackPlays, total: formatNumber(total) }), 30);
+    const data = { current, previous, art, artistPlays, trackPlays, total: formatNumber(total) };
+    const draw = (theme.width || 500) >= 800 ? renderWide : render;
+    sendSvg(res, draw(theme, data), 30);
   } catch (err) {
     sendError(res, err instanceof LastfmError ? err.message : 'Error fetching data from Last.fm', theme);
   }
