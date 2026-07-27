@@ -78,10 +78,9 @@ function render(t: Theme, d: Data): string {
   const live = Boolean(d.current['@attr']?.nowplaying);
   const accent = t.accent || '#e5342b';
   const F = t.font || FONT;
-  // mono runs wider than the sans default, so the text has less room before it
-  // reaches the artwork at x=344
-  const wide = Boolean(t.font);
-  const cap = { title: wide ? 17 : 22, line: wide ? 26 : 34, prev: wide ? 19 : 24, prevLine: wide ? 32 : 42 };
+  // measured: at these caps mono reaches x=307 at most, and the artwork starts
+  // at 344, so the sans-era limits hold for both faces
+  const cap = { title: 22, line: 34, prev: 24, prevLine: 42 };
 
   const ax = 344;
   const ay = 43;
