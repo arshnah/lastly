@@ -78,13 +78,25 @@ function render(t: Theme, d: Data): string {
   const live = Boolean(d.current['@attr']?.nowplaying);
   const accent = t.accent || '#e5342b';
   const F = t.font || FONT;
-  // measured: at these caps mono reaches x=307 at most, and the artwork starts
-  // at 344, so the sans-era limits hold for both faces
-  const cap = { title: 22, line: 34, prev: 24, prevLine: 42 };
 
-  const ax = 344;
-  const ay = 43;
+  // themes can ask for a wider card so it can sit beside cards of another size
+  // without being scaled to a different type size. default stays 500.
+  const W = t.width || 500;
+  const H = 220;
   const asz = 134;
+  const ax = W - 28 - asz;
+  const ay = 43;
+  const textLimit = ax - 12;
+
+  // how many glyphs fit before the artwork, per size. mono advances at ~0.55em,
+  // the sans default a bit under that, so the mono factor covers both.
+  const fit = (size: number) => Math.floor((textLimit - 28) / (size * 0.55));
+  const cap = {
+    title: Math.min(fit(23), 46),
+    line: Math.min(fit(14), 68),
+    prev: Math.min(fit(15), 46),
+    prevLine: Math.min(fit(12), 76),
+  };
   const frame = `<rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="14" fill="none" stroke="${t.section}" stroke-opacity="0.35" stroke-width="1.5"/>`;
   const artwork = d.art
     ? `<rect x="${ax - 3}" y="${ay - 3}" width="${asz + 6}" height="${asz + 6}" rx="16" fill="${t.section}" opacity="0.08"/>
@@ -102,7 +114,7 @@ function render(t: Theme, d: Data): string {
     : `<text x="28" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">LAST SCROBBLE</text>`;
 
   const previous = d.previous
-    ? `<line x1="28" y1="128" x2="316" y2="128" stroke="${t.subtitle}" stroke-opacity="0.18"/>
+    ? `<line x1="28" y1="128" x2="${textLimit - 16}" y2="128" stroke="${t.subtitle}" stroke-opacity="0.18"/>
        <text x="28" y="150" font-family="${F}" font-size="10" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">PREVIOUS</text>
        <text x="28" y="172" font-family="${F}" font-size="15" font-weight="bold" fill="${t.section}" opacity="0.9">${escapeXML(truncate(d.previous.name, cap.prev))}</text>
        <text x="28" y="190" font-family="${F}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text'], cap.prevLine))}</text>`
@@ -110,9 +122,9 @@ function render(t: Theme, d: Data): string {
 
   const stats = `${formatNumber(d.artistPlays)} artist plays   ·   ${formatNumber(d.trackPlays)} track plays   ·   ${d.total} scrobbles`;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="220" viewBox="0 0 500 220" fill="none" role="img">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img">
   ${defs}
-  <rect x="0.5" y="0.5" width="499" height="219" rx="16" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>
+  <rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="16" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>
   ${artwork}
   ${header}
   <text x="28" y="78" font-family="${F}" font-size="23" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, cap.title))}</text>
