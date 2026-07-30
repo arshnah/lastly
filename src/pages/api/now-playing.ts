@@ -140,7 +140,7 @@ function renderWide(t: Theme, d: Data): string {
        <text x="${ax + asz / 2}" y="${ay + asz / 2 + 12}" font-size="34" text-anchor="middle" fill="${t.subtitle}">♪</text>`;
 
   const H = Math.max(y0 + rows.length * 26 + 14, ay + asz + 22);
-  const head = live ? 'now playing' : 'last scrobble';
+  const head = live ? 'now playing' : 'was playing';
   const headW = (14 + 7) * CW + 16;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img">
@@ -202,7 +202,7 @@ function render(t: Theme, d: Data): string {
     ? `<circle cx="34" cy="34" r="4" fill="${accent}"><animate attributeName="opacity" values="1;0.2;1" dur="1.3s" repeatCount="indefinite"/></circle>
        <text x="46" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${accent}">NOW PLAYING</text>
        ${equalizer(accent)}`
-    : `<text x="28" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">LAST SCROBBLE</text>`;
+    : `<text x="28" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">WAS PLAYING</text>`;
 
   const previous = d.previous
     ? `<line x1="28" y1="128" x2="${textLimit - 16}" y2="128" stroke="${t.subtitle}" stroke-opacity="0.18"/>
