@@ -25,10 +25,10 @@ export const themes: Record<string, Theme> = {
   light: { bg: '#ffffff', title: '#24292f', section: '#0969da', item: '#24292f', index: '#cf222e', subtitle: '#57606a', stats: '#1a7f37' },
   arsh: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#d29922', subtitle: '#6e7681', stats: '#8b949e', accent: '#d29922', font: MONO, width: 940, flat: true },
   'arsh-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#9a6700', subtitle: '#8c959f', stats: '#57606a', accent: '#9a6700', font: MONO, width: 940, flat: true },
-  // same flat/mono/wide treatment as arsh, but GitHub's own blue instead of
-  // arsh's amber - for sitting next to a GitHub-styled neofetch/stats card
-  git: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#58a6ff', subtitle: '#8b949e', stats: '#8b949e', accent: '#58a6ff', font: MONO, width: 940, flat: true },
-  'git-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#0969da', subtitle: '#59636e', stats: '#57606a', accent: '#0969da', font: MONO, width: 940, flat: true },
+  // GitHub's real colors, but the normal compact rounded card, not arsh's
+  // flat/mono/wide treatment - a different shape, not just a different accent
+  git: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#3fb950', subtitle: '#8b949e', stats: '#8b949e', accent: '#3fb950' },
+  'git-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#1a7f37', subtitle: '#59636e', stats: '#57606a', accent: '#1a7f37' },
   dracula: { bg: '#282a36', title: '#f8f8f2', section: '#bd93f9', item: '#f8f8f2', index: '#ff79c6', subtitle: '#6272a4', stats: '#50fa7b' },
   gruvbox: { bg: '#282828', title: '#fbf1c7', section: '#fabd2f', item: '#ebdbb2', index: '#fe8019', subtitle: '#a89984', stats: '#b8bb26' },
   tokyonight: { bg: '#1a1b27', title: '#70a5fd', section: '#bf91f3', item: '#a9b1d6', index: '#38bdae', subtitle: '#565f89', stats: '#9ece6a' },
