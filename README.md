@@ -4,7 +4,7 @@ Lastly generates dynamic SVG cards of your Last.fm listening stats, built to emb
 
 It covers a live now-playing card, overall stats, top artists, tracks and albums, and recent activity. Any Last.fm user works.
 
-> Forked from [ni5arga/Lastly](https://github.com/ni5arga/lastly) (MIT). This fork adds the now-playing card, multi-account merging, and the `arsh` / `arsh-light` themes. Deployed at `lastly-pi.vercel.app`.
+> Forked from [ni5arga/Lastly](https://github.com/ni5arga/lastly) (MIT). This fork adds the now-playing card, multi-account merging, the `arsh`/`arsh-light` and `git`/`git-light` themes, and a `bg` color override. Deployed at [lastly.arshnah.in](https://lastly.arshnah.in), which also has a homepage that builds the URL for you - pick a card, a username, a theme, and copy the markdown/HTML/URL out.
 
 ## API endpoints
 
@@ -22,13 +22,13 @@ It covers a live now-playing card, overall stats, top artists, tracks and albums
 Markdown:
 
 ```
-![Now Playing](https://lastly-pi.vercel.app/api/now-playing?username=USERNAME&theme=arsh)
+![Now Playing](https://lastly.arshnah.in/api/now-playing?username=USERNAME&theme=arsh)
 ```
 
 Or HTML for more control (e.g. centering):
 
 ```
-<img src="https://lastly-pi.vercel.app/api/overall?username=USERNAME&theme=dracula" alt="Overall Statistics" align="center">
+<img src="https://lastly.arshnah.in/api/overall?username=USERNAME&theme=dracula" alt="Overall Statistics" align="center">
 ```
 
 Replace `USERNAME` with your Last.fm username.
@@ -39,7 +39,8 @@ Replace `USERNAME` with your Last.fm username.
 - **`period`**: time range for stats. Applies to `overall`, `top-artists`, `top-tracks`, `top-albums`.
   - `overall` (default), `7day`, `1month`, `3month`, `6month`, `12month`
 - **`theme`**: color theme. Defaults to `default`.
-  - `default`, `dark`, `light`, `arsh`, `arsh-light`, `dracula`, `gruvbox`, `tokyonight`, `radical`, `nord`, `catppuccin`
+  - `default`, `dark`, `light`, `arsh`, `arsh-light`, `git`, `git-light`, `dracula`, `gruvbox`, `tokyonight`, `radical`, `nord`, `catppuccin`
+- **`bg`**: hex color (no `#`) to override the theme's background, e.g. `bg=1a2a3a`. Invalid values are ignored.
 
 Invalid values fall back to defaults.
 
@@ -50,7 +51,7 @@ Invalid values fall back to defaults.
 Pass several usernames, comma-separated, to merge accounts into one card. It shows whichever account is currently playing, or the most recent scrobble across all of them, and sums the play counts and totals:
 
 ```
-![Now Playing](https://lastly-pi.vercel.app/api/now-playing?username=account_one,account_two&theme=arsh)
+![Now Playing](https://lastly.arshnah.in/api/now-playing?username=account_one,account_two&theme=arsh)
 ```
 
 Set `LASTFM_EXCLUDE_ARTISTS` (comma-separated, substring match) to skip artists when picking the current track. Useful for hiding something that auto-plays.
@@ -106,8 +107,10 @@ Deploy to Vercel and set the `LASTFM_API_KEY` environment variable during setup.
 src/
 ├── lib/
 │   ├── lastfm.ts   # Last.fm API client: typed fetchers, parseUsernames, timeouts, avatar handling
-│   └── svg.ts      # Themes (incl. arsh / arsh-light), SVG building blocks, error cards, cached senders
+│   └── svg.ts      # Themes (incl. arsh/arsh-light, git/git-light), bg override, SVG building blocks, error cards, cached senders
 └── pages/
+    ├── _app.tsx    # loads Space Grotesk + JetBrains Mono, per grain's spine rule
+    ├── index.tsx   # the homepage - builds the URL, live preview, markdown/HTML/URL copy tabs
     └── api/
         ├── now-playing.ts   # live card, merges multiple accounts
         ├── overall.ts
