@@ -230,7 +230,7 @@ function render(t: Theme, d: Data): string {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const theme = getTheme(req.query.theme);
+  const theme = getTheme(req.query.theme, req.query.bg);
   try {
     const users = parseUsernames(req.query.username);
     if (!users.length) return sendError(res, 'username query param is required', theme);

@@ -25,6 +25,10 @@ export const themes: Record<string, Theme> = {
   light: { bg: '#ffffff', title: '#24292f', section: '#0969da', item: '#24292f', index: '#cf222e', subtitle: '#57606a', stats: '#1a7f37' },
   arsh: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#d29922', subtitle: '#6e7681', stats: '#8b949e', accent: '#d29922', font: MONO, width: 940, flat: true },
   'arsh-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#9a6700', subtitle: '#8c959f', stats: '#57606a', accent: '#9a6700', font: MONO, width: 940, flat: true },
+  // same flat/mono/wide treatment as arsh, but GitHub's own blue instead of
+  // arsh's amber - for sitting next to a GitHub-styled neofetch/stats card
+  git: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#58a6ff', subtitle: '#8b949e', stats: '#8b949e', accent: '#58a6ff', font: MONO, width: 940, flat: true },
+  'git-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#0969da', subtitle: '#59636e', stats: '#57606a', accent: '#0969da', font: MONO, width: 940, flat: true },
   dracula: { bg: '#282a36', title: '#f8f8f2', section: '#bd93f9', item: '#f8f8f2', index: '#ff79c6', subtitle: '#6272a4', stats: '#50fa7b' },
   gruvbox: { bg: '#282828', title: '#fbf1c7', section: '#fabd2f', item: '#ebdbb2', index: '#fe8019', subtitle: '#a89984', stats: '#b8bb26' },
   tokyonight: { bg: '#1a1b27', title: '#70a5fd', section: '#bf91f3', item: '#a9b1d6', index: '#38bdae', subtitle: '#565f89', stats: '#9ece6a' },
@@ -33,9 +37,16 @@ export const themes: Record<string, Theme> = {
   catppuccin: { bg: '#1e1e2e', title: '#cdd6f4', section: '#cba6f7', item: '#cdd6f4', index: '#f38ba8', subtitle: '#9399b2', stats: '#a6e3a1' },
 };
 
-export function getTheme(name: unknown): Theme {
+// Optional hex override (no leading #) for the theme's background, e.g.
+// ?bg=1a1c1f. Replaces a gradient theme's two-stop bg with a flat color.
+export function getTheme(name: unknown, bg?: unknown): Theme {
   const key = Array.isArray(name) ? name[0] : name;
-  return (typeof key === 'string' && themes[key.toLowerCase()]) || themes.default;
+  const theme = (typeof key === 'string' && themes[key.toLowerCase()]) || themes.default;
+  const bgOverride = Array.isArray(bg) ? bg[0] : bg;
+  if (typeof bgOverride === 'string' && /^[0-9a-fA-F]{3,8}$/.test(bgOverride)) {
+    return { ...theme, bg: `#${bgOverride}` };
+  }
+  return theme;
 }
 
 export function escapeXML(str: string): string {
