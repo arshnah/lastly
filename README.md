@@ -16,6 +16,7 @@ It covers a live now-playing card, overall stats, top artists, tracks and albums
 | `/api/top-tracks`  | Top tracks                                               |
 | `/api/top-albums`  | Top albums                                               |
 | `/api/recent`      | Recently played                                         |
+| `/api/lyrics`      | Lyrics for the current/last track, via lrclib.net        |
 
 ## Embedding
 
