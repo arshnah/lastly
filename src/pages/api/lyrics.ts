@@ -15,7 +15,7 @@ function render(t: Theme, track: string, artist: string, lines: string[], live: 
   const CW = FS * 0.62;
   const cap = Math.max(20, Math.floor((W - PAD * 2) / CW));
 
-  const bodyTop = 92;
+  const bodyTop = t.flat ? 104 : 96;
   const lineH = 24;
   const H = Math.max(bodyTop + Math.max(lines.length, 1) * lineH + 14, 130);
 
