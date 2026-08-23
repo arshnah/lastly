@@ -35,9 +35,11 @@ export const themes: Record<string, Theme> = {
   radical: { bg: '#141321', title: '#fe428e', section: '#f8d847', item: '#a9fef7', index: '#fe428e', subtitle: '#a9fef7', stats: '#a9fef7' },
   nord: { bg: '#2e3440', title: '#eceff4', section: '#88c0d0', item: '#e5e9f0', index: '#bf616a', subtitle: '#81a1c1', stats: '#a3be8c' },
   catppuccin: { bg: '#1e1e2e', title: '#cdd6f4', section: '#cba6f7', item: '#cdd6f4', index: '#f38ba8', subtitle: '#9399b2', stats: '#a6e3a1' },
-  // yashvardhan's portfolio (yashiscool) — matches its own light/dark CSS vars
-  'yash-light': { bg: '#fbfaf7', title: '#21201c', section: '#7c5295', item: '#21201c', index: '#7c5295', subtitle: '#6f6d66', stats: '#6f6d66', accent: '#7c5295' },
-  yash: { bg: '#100f0e', title: '#eceae3', section: '#c9a3ff', item: '#eceae3', index: '#c9a3ff', subtitle: '#a4a196', stats: '#a4a196', accent: '#b39ce6' },
+  // yashvardhan's portfolio (yashiscool) — matches its own light/dark CSS vars.
+  // flat: true so the card blends into the page's own bordered container
+  // instead of drawing a second nested box.
+  'yash-light': { bg: '#fbfaf7', title: '#21201c', section: '#7c5295', item: '#21201c', index: '#7c5295', subtitle: '#6f6d66', stats: '#6f6d66', accent: '#7c5295', flat: true },
+  yash: { bg: '#060606', title: '#f2f1ee', section: '#c9a3ff', item: '#f2f1ee', index: '#c9a3ff', subtitle: '#94918a', stats: '#94918a', accent: '#b39ce6', flat: true },
 };
 
 // Optional hex override (no leading #) for the theme's background, e.g.
