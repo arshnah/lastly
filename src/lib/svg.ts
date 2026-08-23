@@ -15,6 +15,9 @@ export interface Theme {
   width?: number;
   // drop the rounded border so the card blends into the page it sits on
   flat?: boolean;
+  // also drop the flat theme's own top/left ruling lines, for hosts that
+  // already draw their own border around the card
+  noRules?: boolean;
 }
 
 const MONO = `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
@@ -38,8 +41,8 @@ export const themes: Record<string, Theme> = {
   // yashvardhan's portfolio (yashiscool) — matches its own light/dark CSS vars.
   // flat: true so the card blends into the page's own bordered container
   // instead of drawing a second nested box.
-  'yash-light': { bg: '#ffffff', title: '#21201c', section: '#7c5295', item: '#21201c', index: '#7c5295', subtitle: '#6f6d66', stats: '#6f6d66', accent: '#7c5295', flat: true },
-  yash: { bg: '#0e0e0d', title: '#f2f1ee', section: '#c9a3ff', item: '#f2f1ee', index: '#c9a3ff', subtitle: '#94918a', stats: '#94918a', accent: '#b39ce6', flat: true },
+  'yash-light': { bg: '#ffffff', title: '#21201c', section: '#7c5295', item: '#21201c', index: '#7c5295', subtitle: '#6f6d66', stats: '#6f6d66', accent: '#7c5295', flat: true, noRules: true },
+  yash: { bg: '#0e0e0d', title: '#f2f1ee', section: '#c9a3ff', item: '#f2f1ee', index: '#c9a3ff', subtitle: '#94918a', stats: '#94918a', accent: '#b39ce6', flat: true, noRules: true },
 };
 
 // Optional hex override (no leading #) for the theme's background, e.g.

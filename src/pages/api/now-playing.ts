@@ -217,8 +217,8 @@ function render(t: Theme, d: Data): string {
   ${defs}
   ${t.flat
     ? `<rect width="${W}" height="${H}" fill="${fill}"/>
-  <line x1="${28}" y1="0.5" x2="${W - 28}" y2="0.5" stroke="${t.subtitle}" stroke-opacity="0.3"/>
-  <line x1="12" y1="0" x2="12" y2="${H}" stroke="${t.subtitle}" stroke-opacity="0.3" stroke-width="1.5"/>`
+  ${t.noRules ? '' : `<line x1="${28}" y1="0.5" x2="${W - 28}" y2="0.5" stroke="${t.subtitle}" stroke-opacity="0.3"/>
+  <line x1="12" y1="0" x2="12" y2="${H}" stroke="${t.subtitle}" stroke-opacity="0.3" stroke-width="1.5"/>`}`
     : `<rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="16" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>`}
   ${artwork}
   ${header}
