@@ -18,6 +18,10 @@ export interface Theme {
   // also drop the flat theme's own top/left ruling lines, for hosts that
   // already draw their own border around the card
   noRules?: boolean;
+  // selects an alternate now-playing layout instead of the default/wide ones
+  render?: 'vertical' | 'vertical-compact' | 'vertical-karaoke' | 'inline' | 'inline-scroll' | 'apple' | 'embed';
+  // corner radius override, from ?radius= or a theme default
+  radius?: number;
 }
 
 const MONO = `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
@@ -43,18 +47,45 @@ export const themes: Record<string, Theme> = {
   // instead of drawing a second nested box.
   'yash-light': { bg: '#ffffff', title: '#21201c', section: '#7c5295', item: '#21201c', index: '#7c5295', subtitle: '#6f6d66', stats: '#6f6d66', accent: '#7c5295', flat: true, noRules: true },
   yash: { bg: '#0e0e0d', title: '#f2f1ee', section: '#c9a3ff', item: '#f2f1ee', index: '#c9a3ff', subtitle: '#94918a', stats: '#94918a', accent: '#b39ce6', flat: true, noRules: true },
+  spotify: { bg: '#121212', title: '#ffffff', section: '#1db954', item: '#ffffff', index: '#1db954', subtitle: '#b3b3b3', stats: '#b3b3b3', accent: '#1db954', width: 320, render: 'vertical' },
+  'spotify-compact': { bg: '#121212', title: '#ffffff', section: '#1db954', item: '#ffffff', index: '#1db954', subtitle: '#b3b3b3', stats: '#b3b3b3', accent: '#1db954', width: 320, render: 'vertical-compact' },
+  'spotify-karaoke': { bg: '#121212', title: '#ffffff', section: '#ff3333', item: '#ffffff', index: '#0000de', subtitle: '#b3b3b3', stats: '#b3b3b3', accent: '#ff3333', width: 320, render: 'vertical-karaoke' },
+  'spotify-inline': { bg: '#ffffff', title: '#121212', section: '#53b14f', item: '#212122', index: '#53b14f', subtitle: '#6b6b6b', stats: '#6b6b6b', accent: '#53b14f', width: 360, render: 'inline' },
+  'spotify-novatorem': { bg: '#ffffff', title: '#434343', section: '#53b14f', item: '#434343', index: '#53b14f', subtitle: '#999999', stats: '#999999', accent: '#53b14f', width: 420, render: 'inline-scroll' },
+  'spotify-apple': { bg: '#1a1a1a', title: '#ffffff', section: '#fc3c44', item: '#ffffff', index: '#fc3c44', subtitle: '#acacac', stats: '#acacac', accent: '#fc3c44', width: 345, render: 'apple' },
+  'spotify-apple-light': { bg: '#f8f8fa', title: '#111827', section: '#fc3c44', item: '#111827', index: '#fc3c44', subtitle: '#6b7280', stats: '#6b7280', accent: '#fc3c44', width: 345, render: 'apple' },
+  'spotify-embed': { bg: '#181818', title: '#ffffff', section: '#1db954', item: '#ffffff', index: '#1db954', subtitle: '#b3b3b3', stats: '#b3b3b3', accent: '#1db954', width: 460, render: 'embed' },
+  'spotify-embed-light': { bg: '#ffffff', title: '#000000', section: '#1db954', item: '#000000', index: '#1db954', subtitle: '#6a6a6a', stats: '#6a6a6a', accent: '#1db954', width: 460, render: 'embed' },
 };
 
 // Optional hex override (no leading #) for the theme's background, e.g.
 // ?bg=1a1c1f. Replaces a gradient theme's two-stop bg with a flat color.
-export function getTheme(name: unknown, bg?: unknown): Theme {
+// Optional ?radius= (0-40) overrides the card's corner radius.
+export function getTheme(name: unknown, bg?: unknown, radius?: unknown): Theme {
   const key = Array.isArray(name) ? name[0] : name;
   const theme = (typeof key === 'string' && themes[key.toLowerCase()]) || themes.default;
   const bgOverride = Array.isArray(bg) ? bg[0] : bg;
+  const radiusOverride = Array.isArray(radius) ? radius[0] : radius;
+
+  let result = theme;
   if (typeof bgOverride === 'string' && /^[0-9a-fA-F]{3,8}$/.test(bgOverride)) {
-    return { ...theme, bg: `#${bgOverride}` };
+    result = { ...result, bg: `#${bgOverride}` };
   }
-  return theme;
+  if (typeof radiusOverride === 'string' && /^\d{1,2}$/.test(radiusOverride)) {
+    result = { ...result, radius: Math.min(40, parseInt(radiusOverride, 10)) };
+  }
+  return result;
+}
+
+export function ensureContrast(hex: string, minBrightness = 90): string {
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const brightness = Math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
+  if (brightness >= minBrightness || brightness === 0) return `#${hex}`;
+  const scale = Math.min(2.5, minBrightness / brightness);
+  const clamp = (v: number) => Math.min(255, Math.round(v * scale));
+  return `#${[r, g, b].map((v) => clamp(v).toString(16).padStart(2, '0')).join('')}`;
 }
 
 export function escapeXML(str: string): string {
@@ -115,7 +146,7 @@ export function card(width: number, height: number, t: Theme, body: string): str
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" role="img">
   ${defs}
   ${styleBlock(t)}
-  <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="10" fill="${fill}" stroke="${t.section}" stroke-opacity="0.2"/>
+  <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${t.radius ?? 10}" fill="${fill}" stroke="${t.section}" stroke-opacity="0.2"/>
   ${body}
 </svg>`;
 }

@@ -37,7 +37,7 @@ function render(t: Theme, track: string, artist: string, lines: string[], live: 
        <line x1="${PAD}" y1="0.5" x2="${W - PAD}" y2="0.5" stroke="${t.subtitle}" stroke-opacity="0.3"/>
        <text x="${PAD}" y="42" font-family="${F}" font-size="${FS + 3}" font-weight="700" fill="${t.section}">arshnah@lastfm</text>
        <text x="${W - PAD}" y="42" text-anchor="end" font-family="${F}" font-size="11" fill="${t.subtitle}">lyrics · ${escapeXML(head)}</text>`
-    : `<rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="16" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>
+    : `<rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="${t.radius ?? 16}" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>
        <text x="${PAD}" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${
          live ? t.accent || t.section : t.subtitle
        }">${live ? 'LYRICS · NOW PLAYING' : 'LYRICS'}</text>`;
@@ -52,7 +52,7 @@ function render(t: Theme, track: string, artist: string, lines: string[], live: 
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const theme = getTheme(req.query.theme, req.query.bg);
+  const theme = getTheme(req.query.theme, req.query.bg, req.query.radius);
   try {
     const users = parseUsernames(req.query.username);
     if (!users.length) return sendError(res, 'username query param is required', theme);

@@ -24,7 +24,7 @@ function column(items: string[], x: number, labelX: number, top: number) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const theme = getTheme(req.query.theme, req.query.bg);
+  const theme = getTheme(req.query.theme, req.query.bg, req.query.radius);
   try {
     const user = parseUsername(req.query.username);
     if (!user) return sendError(res, 'username query param is required', theme);

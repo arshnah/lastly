@@ -12,6 +12,7 @@ const ENDPOINTS = [
 type EndpointId = (typeof ENDPOINTS)[number]["id"];
 
 const THEMES = ["default", "dark", "light", "arsh", "arsh-light", "git", "git-light", "dracula", "gruvbox", "tokyonight", "radical", "nord", "catppuccin"];
+const NOW_PLAYING_THEMES = ["spotify", "spotify-compact", "spotify-karaoke", "spotify-inline", "spotify-novatorem", "spotify-apple", "spotify-embed"];
 
 const PERIODS = [
   { value: "overall", label: "Overall" },
@@ -182,6 +183,12 @@ export default function Home() {
                       {t}
                     </option>
                   ))}
+                  {endpoint === "now-playing" &&
+                    NOW_PLAYING_THEMES.map((t) => (
+                      <option key={t} value={t} style={{ background: "#12121a" }}>
+                        {t}
+                      </option>
+                    ))}
                 </select>
               </div>
 

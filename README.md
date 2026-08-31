@@ -41,7 +41,11 @@ Replace `USERNAME` with your Last.fm username.
   - `overall` (default), `7day`, `1month`, `3month`, `6month`, `12month`
 - **`theme`**: color theme. Defaults to `default`.
   - `default`, `dark`, `light`, `arsh`, `arsh-light`, `git`, `git-light`, `dracula`, `gruvbox`, `tokyonight`, `radical`, `nord`, `catppuccin`
+  - `now-playing` only also has `spotify`, `spotify-compact`, `spotify-karaoke`, `spotify-inline`, `spotify-novatorem`, `spotify-apple`, `spotify-apple-light`, `spotify-embed`, `spotify-embed-light`, layouts inspired by [spotify-github-profile](https://github.com/kittinan/spotify-github-profile)
 - **`bg`**: hex color (no `#`) to override the theme's background, e.g. `bg=1a2a3a`. Invalid values are ignored.
+- **`radius`**: corner radius in pixels (0-40), e.g. `radius=0` for square corners. Works on every card.
+- **`cover_color`** *(now-playing only)*: `true` picks the accent/equalizer color from the current track's cover art instead of the theme default.
+- **`interchange`** *(now-playing only)*: `true` swaps which line is the bold headline, artist instead of track name.
 
 Invalid values fall back to defaults.
 

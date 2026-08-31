@@ -3,7 +3,7 @@ import { getTheme, escapeXML, truncate, avatar, card, sendSvg, sendError } from 
 import { parseUsername, parsePeriod, getUserInfo, getTopTracks, fetchAvatar, pickImage, LastfmError } from '@/lib/lastfm';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const theme = getTheme(req.query.theme, req.query.bg);
+  const theme = getTheme(req.query.theme, req.query.bg, req.query.radius);
   try {
     const user = parseUsername(req.query.username);
     if (!user) return sendError(res, 'username query param is required', theme);

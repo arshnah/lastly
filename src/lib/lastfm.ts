@@ -152,3 +152,16 @@ export async function fetchAvatar(url?: string): Promise<string | null> {
     return null;
   }
 }
+
+export async function dominantColor(url?: string): Promise<string | null> {
+  if (!url) return null;
+  try {
+    const sharp = (await import('sharp')).default;
+    const { data } = await axios.get(url, { responseType: 'arraybuffer', timeout: TIMEOUT });
+    const { data: pixel } = await sharp(Buffer.from(data)).resize(1, 1).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    const [r, g, b] = pixel;
+    return [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
+}
