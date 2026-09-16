@@ -40,6 +40,16 @@ function apiKey() {
   return k;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function requestOnce(url: string) {
+  const { data } = await axios.get(url, { timeout: TIMEOUT });
+  if (data?.error) throw new LastfmError(data.message || 'Last.fm API error');
+  return data;
+}
+
 async function request(method: string, params: Record<string, string>) {
   const url = new URL(API);
   url.searchParams.set('method', method);
@@ -48,15 +58,21 @@ async function request(method: string, params: Record<string, string>) {
   for (const [name, value] of Object.entries(params)) url.searchParams.set(name, value);
 
   try {
-    const { data } = await axios.get(url.toString(), { timeout: TIMEOUT });
-    if (data?.error) throw new LastfmError(data.message || 'Last.fm API error');
-    return data;
+    return await requestOnce(url.toString());
   } catch (err) {
+    // Last.fm occasionally times out or hiccups transiently; one retry after a
+    // short backoff avoids that surfacing as bogus zeroed-out stats.
     if (err instanceof LastfmError) throw err;
-    if (axios.isAxiosError(err) && err.response?.data?.message) {
-      throw new LastfmError(err.response.data.message);
+    await sleep(300);
+    try {
+      return await requestOnce(url.toString());
+    } catch (retryErr) {
+      if (retryErr instanceof LastfmError) throw retryErr;
+      if (axios.isAxiosError(retryErr) && retryErr.response?.data?.message) {
+        throw new LastfmError(retryErr.response.data.message);
+      }
+      throw new LastfmError('Could not reach Last.fm');
     }
-    throw new LastfmError('Could not reach Last.fm');
   }
 }
 
@@ -143,11 +159,20 @@ export function pickImage(images?: LfmImage[]): string | undefined {
   return images[2]?.['#text'] || [...images].reverse().find((i) => i['#text'])?.['#text'];
 }
 
+function sniffImageType(buf: Buffer): string {
+  if (buf[0] === 0xff && buf[1] === 0xd8) return 'image/jpeg';
+  if (buf[0] === 0x89 && buf[1] === 0x50) return 'image/png';
+  if (buf[0] === 0x47 && buf[1] === 0x49) return 'image/gif';
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[8] === 0x57 && buf[9] === 0x45) return 'image/webp';
+  return 'image/jpeg';
+}
+
 export async function fetchAvatar(url?: string): Promise<string | null> {
   if (!url) return null;
   try {
     const { data } = await axios.get(url, { responseType: 'arraybuffer', timeout: TIMEOUT });
-    return `data:image/png;base64,${Buffer.from(data, 'binary').toString('base64')}`;
+    const buf = Buffer.from(data, 'binary');
+    return `data:${sniffImageType(buf)};base64,${buf.toString('base64')}`;
   } catch {
     return null;
   }

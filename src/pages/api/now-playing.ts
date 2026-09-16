@@ -65,6 +65,18 @@ function equalizer(color: string): string {
     .join('');
 }
 
+function textCap(widthPx: number, fontPx: number, weight: 'regular' | 'bold' | 'heavy' = 'regular'): number {
+  const factor = weight === 'heavy' ? 0.66 : weight === 'bold' ? 0.6 : 0.52;
+  return Math.max(3, Math.floor(widthPx / (fontPx * factor)));
+}
+
+function clip(id: string, x: number, y: number, width: number, height: number): { def: string; attr: string } {
+  return {
+    def: `<clipPath id="${id}"><rect x="${x}" y="${y}" width="${Math.max(0, width)}" height="${height}"/></clipPath>`,
+    attr: ` clip-path="url(#${id})"`,
+  };
+}
+
 function miniEqualizer(x: number, baseline: number, color: string): string {
   return [0, 1, 2, 3]
     .map((i) => {
@@ -187,7 +199,8 @@ function renderSpotifyVertical(t: Theme, d: Data, opts: { bars: boolean; karaoke
   const accent = t.accent || t.section;
   const artist = d.current.artist?.['#text'] || 'Unknown Artist';
   const song = d.current.name;
-  const cap = Math.max(10, Math.floor((coverSize - 10) / 8.5));
+  const textWidth = coverSize - 20;
+  const textX = PAD + 10;
 
   let y = PAD + 14;
   let header = '';
@@ -200,12 +213,21 @@ function renderSpotifyVertical(t: Theme, d: Data, opts: { bars: boolean; karaoke
 
   let textBlock: string;
   if (opts.karaoke) {
-    textBlock = `<text x="${W / 2}" y="${y + 20}" text-anchor="middle" font-family="${F}" font-size="22" font-weight="900" fill="#0000de" stroke="#f7f7f7" stroke-width="0.6">${escapeXML(truncate(song, cap))}</text>
-      <text x="${W / 2}" y="${y + 48}" text-anchor="middle" font-family="${F}" font-size="22" font-weight="900" fill="#ff3333" stroke="#efefef" stroke-width="0.6">${escapeXML(truncate(artist, cap))}</text>`;
+    const cap = textCap(textWidth, 22, 'heavy');
+    const songClip = clip('kSong', textX, y - 4, textWidth, 30);
+    const artistClip = clip('kArtist', textX, y + 24, textWidth, 30);
+    textBlock = `${songClip.def}${artistClip.def}
+      <text x="${W / 2}" y="${y + 20}" text-anchor="middle" font-family="${F}" font-size="22" font-weight="900" fill="#0000de" stroke="#f7f7f7" stroke-width="0.6"${songClip.attr}>${escapeXML(truncate(song, cap))}</text>
+      <text x="${W / 2}" y="${y + 48}" text-anchor="middle" font-family="${F}" font-size="22" font-weight="900" fill="#ff3333" stroke="#efefef" stroke-width="0.6"${artistClip.attr}>${escapeXML(truncate(artist, cap))}</text>`;
     y += 64;
   } else {
-    textBlock = `<text x="${W / 2}" y="${y + 18}" text-anchor="middle" font-family="${F}" font-size="19" font-weight="bold" fill="${t.title}">${escapeXML(truncate(artist, cap))}</text>
-      <text x="${W / 2}" y="${y + 40}" text-anchor="middle" font-family="${F}" font-size="15" fill="${t.subtitle}">${escapeXML(truncate(song, cap))}</text>`;
+    const artistCap = textCap(textWidth, 19, 'bold');
+    const songCap = textCap(textWidth, 15, 'regular');
+    const artistClip = clip('vArtist', textX, y - 4, textWidth, 26);
+    const songClip = clip('vSong', textX, y + 18, textWidth, 24);
+    textBlock = `${artistClip.def}${songClip.def}
+      <text x="${W / 2}" y="${y + 18}" text-anchor="middle" font-family="${F}" font-size="19" font-weight="bold" fill="${t.title}"${artistClip.attr}>${escapeXML(truncate(artist, artistCap))}</text>
+      <text x="${W / 2}" y="${y + 40}" text-anchor="middle" font-family="${F}" font-size="15" fill="${t.subtitle}"${songClip.attr}>${escapeXML(truncate(song, songCap))}</text>`;
     y += 56;
   }
 
@@ -239,7 +261,11 @@ function renderSpotifyInline(t: Theme, d: Data, size: number): string {
   const song = d.current.name;
   const H = size + PAD * 2;
   const tx = PAD + size + 14;
-  const cap = Math.max(8, Math.floor((W - PAD - tx) / 7.6));
+  const textLimit = W - PAD - tx;
+  const artistCap = textCap(textLimit, 15, 'bold');
+  const songCap = textCap(textLimit, 13, 'regular');
+  const artistClip = clip('inArtist', tx, PAD, textLimit, 22);
+  const songClip = clip('inSong', tx, PAD + 22, textLimit, 20);
 
   const artwork = d.art
     ? `<clipPath id="cov2"><rect x="${PAD}" y="${PAD}" width="${size}" height="${size}" rx="4"/></clipPath>
@@ -251,10 +277,11 @@ function renderSpotifyInline(t: Theme, d: Data, size: number): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img">
   ${defs}
+  ${artistClip.def}${songClip.def}
   <rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="${t.flat ? 0 : t.radius ?? 10}" fill="${fill}"${t.flat ? '' : ` stroke="${t.subtitle}" stroke-opacity="0.18"`}/>
   ${artwork}
-  <text x="${tx}" y="${PAD + 18}" font-family="${F}" font-size="15" font-weight="600" fill="${t.title}">${escapeXML(truncate(artist, cap))}</text>
-  <text x="${tx}" y="${PAD + 38}" font-family="${F}" font-size="13" fill="${t.subtitle}">${escapeXML(truncate(song, cap))}</text>
+  <text x="${tx}" y="${PAD + 18}" font-family="${F}" font-size="15" font-weight="600" fill="${t.title}"${artistClip.attr}>${escapeXML(truncate(artist, artistCap))}</text>
+  <text x="${tx}" y="${PAD + 38}" font-family="${F}" font-size="13" fill="${t.subtitle}"${songClip.attr}>${escapeXML(truncate(song, songCap))}</text>
   ${bars}
 </svg>`;
 }
@@ -269,7 +296,8 @@ function renderSpotifyApple(t: Theme, d: Data): string {
   const accent = t.accent || '#fc3c44';
   const artist = d.current.artist?.['#text'] || 'Unknown Artist';
   const song = d.current.name;
-  const cap = Math.max(10, Math.floor(coverSize / 8));
+  const songCap = textCap(coverSize, 18, 'bold');
+  const artistCap = textCap(coverSize, 15, 'regular');
 
   let y = PAD + 12;
   const header = `<text x="${PAD}" y="${y}" font-family="${F}" font-size="13" font-weight="700" fill="${accent}">♫ Music</text>
@@ -284,8 +312,10 @@ function renderSpotifyApple(t: Theme, d: Data): string {
        <text x="${PAD + coverSize / 2}" y="${cy + coverSize / 2 + 18}" font-size="56" text-anchor="middle" fill="${t.subtitle}">♪</text>`;
 
   const ty = cy + coverSize + 34;
-  const songLine = `<text x="${PAD}" y="${ty}" font-family="${F}" font-size="18" font-weight="700" fill="${t.title}">${escapeXML(truncate(song, cap))}</text>`;
-  const artistLine = `<text x="${PAD}" y="${ty + 22}" font-family="${F}" font-size="15" fill="${t.subtitle}">${escapeXML(truncate(artist, cap))}</text>`;
+  const songClip = clip('appleSong', PAD, ty - 20, coverSize, 26);
+  const artistClip = clip('appleArtist', PAD, ty + 2, coverSize, 22);
+  const songLine = `${songClip.def}<text x="${PAD}" y="${ty}" font-family="${F}" font-size="18" font-weight="700" fill="${t.title}"${songClip.attr}>${escapeXML(truncate(song, songCap))}</text>`;
+  const artistLine = `${artistClip.def}<text x="${PAD}" y="${ty + 22}" font-family="${F}" font-size="15" fill="${t.subtitle}"${artistClip.attr}>${escapeXML(truncate(artist, artistCap))}</text>`;
 
   const sliderY = ty + 44;
   const sliderW = coverSize;
@@ -321,7 +351,10 @@ function renderSpotifyEmbed(t: Theme, d: Data): string {
   const song = d.current.name;
   const tx = PAD + size + 16;
   const textLimit = W - PAD - tx;
-  const cap = Math.max(10, Math.floor(textLimit / 7.6));
+  const songCap = textCap(textLimit, 17, 'bold');
+  const artistCap = textCap(textLimit, 13, 'regular');
+  const songClip = clip('embedSong', tx, PAD, textLimit, 24);
+  const artistClip = clip('embedArtist', tx, PAD + 24, textLimit, 20);
 
   const artwork = d.art
     ? `<clipPath id="covE"><rect x="${PAD}" y="${PAD}" width="${size}" height="${size}" rx="4"/></clipPath>
@@ -336,10 +369,11 @@ function renderSpotifyEmbed(t: Theme, d: Data): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img">
   ${defs}
+  ${songClip.def}${artistClip.def}
   <rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="${t.radius ?? 10}" fill="${fill}"/>
   ${artwork}
-  <text x="${tx}" y="${PAD + 22}" font-family="${F}" font-size="17" font-weight="700" fill="${t.title}">${escapeXML(truncate(song, cap))}</text>
-  <text x="${tx}" y="${PAD + 42}" font-family="${F}" font-size="13" fill="${t.subtitle}">${escapeXML(truncate(artist, cap))}</text>
+  <text x="${tx}" y="${PAD + 22}" font-family="${F}" font-size="17" font-weight="700" fill="${t.title}"${songClip.attr}>${escapeXML(truncate(song, songCap))}</text>
+  <text x="${tx}" y="${PAD + 42}" font-family="${F}" font-size="13" fill="${t.subtitle}"${artistClip.attr}>${escapeXML(truncate(artist, artistCap))}</text>
   <text x="${tx}" y="${PAD + 62}" font-family="${F}" font-size="11" font-weight="700" letter-spacing="1" fill="${accent}">${status}</text>
   <rect x="${tx}" y="${barY}" width="${barW}" height="4" rx="2" fill="${t.subtitle}" opacity="0.25"/>
   <rect x="${tx}" y="${barY}" width="${(barW * fillPct) / 100}" height="4" rx="2" fill="${accent}"/>
@@ -348,68 +382,131 @@ function renderSpotifyEmbed(t: Theme, d: Data): string {
 </svg>`;
 }
 
+function renderGit(t: Theme, d: Data): string {
+  const { defs, fill } = resolveBackground(t);
+  const live = Boolean(d.current['@attr']?.nowplaying);
+  const accent = t.accent || t.section;
+  const F = t.font || FONT;
+  const W = t.width || 500;
+  const H = 122;
+  const PAD = 20;
+  const asz = 84;
+  const ax = W - PAD - asz;
+  const ay = (H - asz) / 2;
+  const textLimit = ax - PAD - 14;
+
+  const artist = d.current.artist?.['#text'] || 'Unknown Artist';
+  const song = d.current.name;
+  const titleCap = textCap(textLimit, 16, 'bold');
+  const artistCap = textCap(textLimit, 12.5, 'regular');
+  const footerCap = textCap(textLimit, 10.5, 'regular');
+  const titleClip = clip('gitTitle', PAD, 30, textLimit, 24);
+  const artistClip = clip('gitArtist', PAD, 52, textLimit, 20);
+  const footerClip = clip('gitFooter', PAD, 84, textLimit, 18);
+
+  const artwork = d.art
+    ? `<clipPath id="gitArt"><rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="8"/></clipPath>
+       <image href="${d.art}" x="${ax}" y="${ay}" width="${asz}" height="${asz}" clip-path="url(#gitArt)" preserveAspectRatio="xMidYMid slice"/>
+       <rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="8" fill="none" stroke="${t.subtitle}" stroke-opacity="0.3"/>`
+    : `<rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="8" fill="${accent}" opacity="0.1"/>
+       <text x="${ax + asz / 2}" y="${ay + asz / 2 + 8}" font-size="28" text-anchor="middle" fill="${t.subtitle}">♪</text>`;
+
+  const badgeLabel = live ? 'NOW PLAYING' : 'RECENTLY PLAYED';
+  const badgeColor = live ? accent : t.subtitle;
+  const header = `<circle cx="${PAD + 4}" cy="17" r="3.5" fill="${badgeColor}">${live ? `<animate attributeName="opacity" values="1;0.25;1" dur="1.3s" repeatCount="indefinite"/>` : ''}</circle>
+       <text x="${PAD + 14}" y="20.5" font-family="${F}" font-size="10" font-weight="700" letter-spacing="1.5" fill="${badgeColor}">${badgeLabel}</text>`;
+
+  const footerText = d.previous
+    ? `Previously: ${d.previous.name} — ${formatNumber(d.artistPlays)} artist plays · ${formatNumber(d.trackPlays)} track plays`
+    : `${formatNumber(d.artistPlays)} artist plays · ${formatNumber(d.trackPlays)} track plays · ${d.total} scrobbles`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img">
+  ${defs}
+  ${titleClip.def}${artistClip.def}${footerClip.def}
+  <rect width="${W}" height="${H}" fill="${fill}"/>
+  <line x1="0" y1="0.5" x2="${W}" y2="0.5" stroke="${t.subtitle}" stroke-opacity="0.3"/>
+  <line x1="0" y1="${H - 0.5}" x2="${W}" y2="${H - 0.5}" stroke="${t.subtitle}" stroke-opacity="0.3"/>
+  ${header}
+  <text x="${PAD}" y="46" font-family="${F}" font-size="16" font-weight="700" fill="${t.title}"${titleClip.attr}>${escapeXML(truncate(song, titleCap))}</text>
+  <text x="${PAD}" y="66" font-family="${F}" font-size="12.5" fill="${t.subtitle}"${artistClip.attr}>${escapeXML(truncate(artist, artistCap))}</text>
+  <text x="${PAD}" y="98" font-family="${F}" font-size="10.5" fill="${t.subtitle}"${footerClip.attr}>${escapeXML(truncate(footerText, footerCap))}</text>
+  ${artwork}
+</svg>`;
+}
+
 function render(t: Theme, d: Data): string {
   const { defs, fill } = resolveBackground(t);
   const live = Boolean(d.current['@attr']?.nowplaying);
   const accent = t.accent || '#e5342b';
   const F = t.font || FONT;
+  const hasArt = Boolean(d.art);
 
   // themes can ask for a wider card so it can sit beside cards of another size
   // without being scaled to a different type size. default stays 500.
   const W = t.width || 500;
-  const H = 220;
-  const asz = 134;
-  const ax = W - 28 - asz;
-  const ay = 43;
-  const textLimit = ax - 12;
+  const H = 280;
+  const PAD = 28;
+  const radius = t.radius ?? 16;
+  const textWidth = W - PAD * 2;
 
-  // how many glyphs fit before the artwork, per size. mono advances at ~0.55em,
-  // the sans default a bit under that, so the mono factor covers both.
-  const fit = (size: number) => Math.floor((textLimit - 28) / (size * 0.55));
-  const cap = {
-    title: Math.min(fit(23), 46),
-    line: Math.min(fit(14), 68),
-    prev: Math.min(fit(15), 46),
-    prevLine: Math.min(fit(12), 76),
-  };
-  const frame = `<rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="14" fill="none" stroke="${t.section}" stroke-opacity="0.35" stroke-width="1.5"/>`;
-  const artwork = d.art
-    ? `<rect x="${ax - 3}" y="${ay - 3}" width="${asz + 6}" height="${asz + 6}" rx="16" fill="${t.section}" opacity="0.08"/>
-       <clipPath id="art"><rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="14"/></clipPath>
-       <image href="${d.art}" x="${ax}" y="${ay}" width="${asz}" height="${asz}" clip-path="url(#art)" preserveAspectRatio="xMidYMid slice"/>
-       ${frame}`
-    : `<rect x="${ax}" y="${ay}" width="${asz}" height="${asz}" rx="14" fill="${t.section}" opacity="0.1"/>
-       <text x="${ax + asz / 2}" y="${ay + asz / 2 + 18}" font-size="50" text-anchor="middle" fill="${t.subtitle}">♪</text>
-       ${frame}`;
+  // full-bleed art needs light text with a bottom scrim for guaranteed
+  // contrast; without art, fall back to the theme's own text colors
+  const titleColor = hasArt ? '#ffffff' : t.section;
+  const itemColor = hasArt ? '#e7e7e7' : t.item;
+  const subtleColor = hasArt ? '#c7c7c7' : t.subtitle;
 
-  const header = live
-    ? `<circle cx="34" cy="34" r="4" fill="${accent}"><animate attributeName="opacity" values="1;0.2;1" dur="1.3s" repeatCount="indefinite"/></circle>
-       <text x="46" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${accent}">NOW PLAYING</text>
-       ${equalizer(accent)}`
-    : `<text x="28" y="38" font-family="${F}" font-size="12" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">WAS PLAYING</text>`;
+  const cardClip = `<clipPath id="cardClip"><rect x="0" y="0" width="${W}" height="${H}" rx="${radius}"/></clipPath>`;
+  const scrim = `<linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="42%" stop-color="#000000" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.92"/>
+    </linearGradient>`;
 
+  const background = hasArt
+    ? `<g clip-path="url(#cardClip)">
+         <image href="${d.art}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
+         <rect width="${W}" height="${H}" fill="url(#scrim)"/>
+       </g>
+       <rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="${radius}" fill="none" stroke="#000000" stroke-opacity="0.25"/>`
+    : `<rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="${radius}" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>`;
+
+  const badgeLabel = live ? 'NOW PLAYING' : 'WAS PLAYING';
+  const badgeTextColor = hasArt ? accent : live ? accent : t.subtitle;
+  const badgeWidth = badgeLabel.length * 6.6 + (live ? 32 : 16);
+  const header = `<rect x="${PAD}" y="20" width="${badgeWidth}" height="21" rx="6" fill="${hasArt ? '#000000' : badgeTextColor}" opacity="${hasArt ? 0.45 : 0.14}"/>
+       ${live ? `<circle cx="${PAD + 14}" cy="30.5" r="4" fill="${accent}"><animate attributeName="opacity" values="1;0.25;1" dur="1.3s" repeatCount="indefinite"/></circle>` : ''}
+       <text x="${PAD + (live ? 24 : 12)}" y="34.5" font-family="${F}" font-size="11" font-weight="700" letter-spacing="1.5" fill="${badgeTextColor}">${escapeXML(badgeLabel)}</text>
+       ${live ? miniEqualizer(PAD + badgeWidth + 14, 30, accent) : ''}`;
+
+  const titleCap = textCap(textWidth, 24, 'bold');
+  const lineCap = textCap(textWidth, 14, 'regular');
+  const titleClip = clip('cTitle', PAD, H - 116, textWidth, 32);
+  const lineClip = clip('cLine', PAD, H - 84, textWidth, 22);
+
+  const previousCap = textCap(textWidth, 11.5, 'regular');
+  const previousText = d.previous
+    ? `Previously — ${d.previous.name} · ${d.previous.artist?.['#text'] || ''}`
+    : '';
+  const previousClip = clip('cPrev', PAD, H - 58, textWidth, 18);
   const previous = d.previous
-    ? `<line x1="28" y1="128" x2="${textLimit - 16}" y2="128" stroke="${t.subtitle}" stroke-opacity="0.18"/>
-       <text x="28" y="150" font-family="${F}" font-size="10" font-weight="bold" letter-spacing="2" fill="${t.subtitle}">PREVIOUS</text>
-       <text x="28" y="172" font-family="${F}" font-size="15" font-weight="bold" fill="${t.section}" opacity="0.9">${escapeXML(truncate(d.previous.name, cap.prev))}</text>
-       <text x="28" y="190" font-family="${F}" font-size="12" fill="${t.subtitle}">${escapeXML(line(d.previous.artist?.['#text'], d.previous.album?.['#text'], cap.prevLine))}</text>`
+    ? `${previousClip.def}<text x="${PAD}" y="${H - 44}" font-family="${F}" font-size="11.5" fill="${subtleColor}"${previousClip.attr}>${escapeXML(truncate(previousText, previousCap))}</text>`
     : '';
 
   const stats = `${formatNumber(d.artistPlays)} artist plays   ·   ${formatNumber(d.trackPlays)} track plays   ·   ${d.total} scrobbles`;
+  const statsCap = textCap(textWidth, 10.5, 'regular');
+  const statsClip = clip('cStats', PAD, H - 32, textWidth, 16);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img">
   ${defs}
-  ${t.flat
-    ? `<rect width="${W}" height="${H}" fill="${fill}"/>
-  ${t.noRules ? '' : `<line x1="${28}" y1="0.5" x2="${W - 28}" y2="0.5" stroke="${t.subtitle}" stroke-opacity="0.3"/>
-  <line x1="12" y1="0" x2="12" y2="${H}" stroke="${t.subtitle}" stroke-opacity="0.3" stroke-width="1.5"/>`}`
-    : `<rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="${t.radius ?? 16}" fill="${fill}" stroke="${t.subtitle}" stroke-opacity="0.18"/>`}
-  ${artwork}
+  ${cardClip}
+  ${hasArt ? scrim : ''}
+  ${titleClip.def}${lineClip.def}${statsClip.def}
+  ${background}
   ${header}
-  <text x="28" y="78" font-family="${F}" font-size="23" font-weight="bold" fill="${t.section}">${escapeXML(truncate(d.current.name, cap.title))}</text>
-  <text x="28" y="103" font-family="${F}" font-size="14" fill="${t.item}">${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text'], cap.line))}</text>
+  <text x="${PAD}" y="${H - 90}" font-family="${F}" font-size="24" font-weight="bold" fill="${titleColor}"${titleClip.attr}>${escapeXML(truncate(d.current.name, titleCap))}</text>
+  <text x="${PAD}" y="${H - 66}" font-family="${F}" font-size="14" fill="${itemColor}"${lineClip.attr}>${escapeXML(line(d.current.artist?.['#text'], d.current.album?.['#text'], lineCap))}</text>
   ${previous}
-  <text x="28" y="209" font-family="${F}" font-size="10.5" fill="${t.subtitle}">${escapeXML(stats)}</text>
+  <text x="${PAD}" y="${H - 20}" font-family="${F}" font-size="10.5" fill="${subtleColor}"${statsClip.attr}>${escapeXML(truncate(stats, statsCap))}</text>
 </svg>`;
 }
 
@@ -429,6 +526,8 @@ function pickRenderer(t: Theme): (t: Theme, d: Data) => string {
       return renderSpotifyApple;
     case 'embed':
       return renderSpotifyEmbed;
+    case 'git':
+      return renderGit;
     default:
       return (t.width || 500) >= 800 ? renderWide : render;
   }

@@ -19,7 +19,7 @@ export interface Theme {
   // already draw their own border around the card
   noRules?: boolean;
   // selects an alternate now-playing layout instead of the default/wide ones
-  render?: 'vertical' | 'vertical-compact' | 'vertical-karaoke' | 'inline' | 'inline-scroll' | 'apple' | 'embed';
+  render?: 'vertical' | 'vertical-compact' | 'vertical-karaoke' | 'inline' | 'inline-scroll' | 'apple' | 'embed' | 'git';
   // corner radius override, from ?radius= or a theme default
   radius?: number;
 }
@@ -27,21 +27,21 @@ export interface Theme {
 const MONO = `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
 
 export const themes: Record<string, Theme> = {
-  default: { bg: ['#1a2a3a', '#3d6073'], title: '#ffffff', section: '#ffd700', item: '#f5f5f5', index: '#ff6b6b', subtitle: '#e0e0e0', stats: '#f5f5f5' },
-  dark: { bg: '#0d1117', title: '#ffffff', section: '#58a6ff', item: '#c9d1d9', index: '#f778ba', subtitle: '#8b949e', stats: '#c9d1d9' },
-  light: { bg: '#ffffff', title: '#24292f', section: '#0969da', item: '#24292f', index: '#cf222e', subtitle: '#57606a', stats: '#1a7f37' },
+  default: { bg: ['#1a2a3a', '#3d6073'], title: '#ffffff', section: '#ffd700', item: '#f5f5f5', index: '#ff6b6b', subtitle: '#e0e0e0', stats: '#f5f5f5', accent: '#ffd700' },
+  dark: { bg: '#0d1117', title: '#ffffff', section: '#58a6ff', item: '#c9d1d9', index: '#f778ba', subtitle: '#8b949e', stats: '#c9d1d9', accent: '#58a6ff' },
+  light: { bg: '#ffffff', title: '#24292f', section: '#0969da', item: '#24292f', index: '#cf222e', subtitle: '#57606a', stats: '#1a7f37', accent: '#cf222e' },
   arsh: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#d29922', subtitle: '#6e7681', stats: '#8b949e', accent: '#d29922', font: MONO, width: 940, flat: true },
   'arsh-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#9a6700', subtitle: '#8c959f', stats: '#57606a', accent: '#9a6700', font: MONO, width: 940, flat: true },
-  // GitHub's real colors, but the normal compact rounded card, not arsh's
-  // flat/mono/wide treatment - a different shape, not just a different accent
-  git: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#3fb950', subtitle: '#8b949e', stats: '#8b949e', accent: '#3fb950' },
-  'git-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#1a7f37', subtitle: '#59636e', stats: '#57606a', accent: '#1a7f37' },
-  dracula: { bg: '#282a36', title: '#f8f8f2', section: '#bd93f9', item: '#f8f8f2', index: '#ff79c6', subtitle: '#6272a4', stats: '#50fa7b' },
-  gruvbox: { bg: '#282828', title: '#fbf1c7', section: '#fabd2f', item: '#ebdbb2', index: '#fe8019', subtitle: '#a89984', stats: '#b8bb26' },
-  tokyonight: { bg: '#1a1b27', title: '#70a5fd', section: '#bf91f3', item: '#a9b1d6', index: '#38bdae', subtitle: '#565f89', stats: '#9ece6a' },
-  radical: { bg: '#141321', title: '#fe428e', section: '#f8d847', item: '#a9fef7', index: '#fe428e', subtitle: '#a9fef7', stats: '#a9fef7' },
-  nord: { bg: '#2e3440', title: '#eceff4', section: '#88c0d0', item: '#e5e9f0', index: '#bf616a', subtitle: '#81a1c1', stats: '#a3be8c' },
-  catppuccin: { bg: '#1e1e2e', title: '#cdd6f4', section: '#cba6f7', item: '#cdd6f4', index: '#f38ba8', subtitle: '#9399b2', stats: '#a6e3a1' },
+  // GitHub's real colors on a flat, borderless compact layout so it blends
+  // straight into a README instead of looking like a pasted-in card
+  git: { bg: '#0d1117', title: '#c9d1d9', section: '#58a6ff', item: '#c9d1d9', index: '#3fb950', subtitle: '#8b949e', stats: '#8b949e', accent: '#3fb950', flat: true, render: 'git' },
+  'git-light': { bg: '#ffffff', title: '#1f2328', section: '#0969da', item: '#1f2328', index: '#1a7f37', subtitle: '#59636e', stats: '#57606a', accent: '#1a7f37', flat: true, render: 'git' },
+  dracula: { bg: '#282a36', title: '#f8f8f2', section: '#bd93f9', item: '#f8f8f2', index: '#ff79c6', subtitle: '#6272a4', stats: '#50fa7b', accent: '#bd93f9' },
+  gruvbox: { bg: '#282828', title: '#fbf1c7', section: '#fabd2f', item: '#ebdbb2', index: '#fe8019', subtitle: '#a89984', stats: '#b8bb26', accent: '#fe8019' },
+  tokyonight: { bg: '#1a1b27', title: '#70a5fd', section: '#bf91f3', item: '#a9b1d6', index: '#38bdae', subtitle: '#565f89', stats: '#9ece6a', accent: '#38bdae' },
+  radical: { bg: '#141321', title: '#fe428e', section: '#f8d847', item: '#a9fef7', index: '#fe428e', subtitle: '#a9fef7', stats: '#a9fef7', accent: '#fe428e' },
+  nord: { bg: '#2e3440', title: '#eceff4', section: '#88c0d0', item: '#e5e9f0', index: '#bf616a', subtitle: '#81a1c1', stats: '#a3be8c', accent: '#88c0d0' },
+  catppuccin: { bg: '#1e1e2e', title: '#cdd6f4', section: '#cba6f7', item: '#cdd6f4', index: '#f38ba8', subtitle: '#9399b2', stats: '#a6e3a1', accent: '#a6e3a1' },
   // yashvardhan's portfolio (yashiscool) — matches its own light/dark CSS vars.
   // flat: true so the card blends into the page's own bordered container
   // instead of drawing a second nested box.
